@@ -1,0 +1,46 @@
+@startuml 01_models_disciplinas
+' MyFlow - models/disciplinas.py
+title MyFlow - models/disciplinas.py (classe Disciplina)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam classFontStyle bold
+hide circle
+
+package "models" {
+  class Disciplina {
+    -_id : int | None
+    -_nome : str
+    -_codigo : str
+    -_carga_horaria : int
+    -_concluida : bool
+    .. properties (getter / setter com validação) ..
+    +id : int | None
+    +nome : str
+    +codigo : str
+    +carga_horaria : int
+    +concluida : bool
+    -- construtor --
+    +__init__(nome, codigo, carga_horaria, id=None)
+    -- comportamentos --
+    +concluir() : bool
+    +reabrir() : bool
+    +exibir_ficha() : None
+    +__repr__() : str
+    +to_dict() : dict
+  }
+}
+
+note right of Disciplina
+  <b>Regras de negócio</b>
+  - concluida NÃO é parâmetro do __init__:
+    toda disciplina nasce com concluida = False
+  - codigo identifica a disciplina (ex.: "POO-2026")
+  - carga_horaria em horas, inteiro > 0
+  - id: None até o repositório gravar no banco
+  - concluir(): False se já concluída
+  - reabrir(): False se não concluída
+  - dados inválidos nos setters lançam ValueError
+end note
+
+@enduml

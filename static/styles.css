@@ -1,0 +1,233 @@
+/* ========================================
+   MYFLOW - ESTILOS GERAIS
+======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --cor-principal: #3776AB;
+    --cor-principal-hover: #285B86;
+    --cor-fundo: #F3F6FA;
+    --cor-branca: #FFFFFF;
+    --cor-texto: #263445;
+    --cor-texto-secundario: #65758B;
+    --cor-borda: #D8E1EC;
+    --cor-foco: #B9D9F5;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    min-height: 100vh;
+    line-height: 1.6;
+    padding: 40px 20px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ========================================
+   CONTAINER PRINCIPAL
+======================================== */
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ========================================
+   CABEÇALHO
+======================================== */
+
+.cabecalho {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.cabecalho h1 {
+    color: var(--cor-principal);
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    margin-bottom: 8px;
+}
+
+.cabecalho h2 {
+    font-size: 25px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.cabecalho p {
+    color: var(--cor-texto-secundario);
+    font-size: 15px;
+}
+
+/* ========================================
+   FORMULÁRIO
+======================================== */
+
+.formulario-container {
+    background: var(--cor-branca);
+    padding: 35px;
+    border-radius: 16px;
+    border: 1px solid var(--cor-borda);
+    box-shadow: 0 8px 28px rgba(35, 57, 82, 0.07);
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.campo label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cor-texto);
+}
+
+/* ========================================
+   CAMPOS DE ENTRADA
+======================================== */
+
+.campo input,
+.campo select,
+.campo textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    background-color: var(--cor-branca);
+    color: var(--cor-texto);
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.2s ease,
+                box-shadow 0.2s ease;
+}
+
+.campo input,
+.campo select {
+    min-height: 46px;
+}
+
+.campo textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.campo input::placeholder,
+.campo textarea::placeholder {
+    color: #9AA7B6;
+}
+
+/* Destaque ao selecionar um campo */
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+    outline: none;
+    border-color: var(--cor-principal);
+    box-shadow: 0 0 0 3px var(--cor-foco);
+}
+
+/* Texto auxiliar */
+
+.campo small {
+    color: var(--cor-texto-secundario);
+    font-size: 12px;
+}
+
+/* ========================================
+   BOTÃO DE CADASTRO
+======================================== */
+
+.botao-cadastro {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 5px;
+    padding: 13px 18px;
+
+    background-color: var(--cor-principal);
+    color: var(--cor-branca);
+
+    border: none;
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: background-color 0.2s ease,
+                transform 0.2s ease;
+}
+
+.botao-cadastro:hover {
+    background-color: var(--cor-principal-hover);
+}
+
+.botao-cadastro:active {
+    transform: scale(0.99);
+}
+
+.botao-cadastro:focus-visible {
+    outline: 3px solid var(--cor-foco);
+    outline-offset: 3px;
+}
+
+/* ========================================
+   RODAPÉ
+======================================== */
+
+.rodape {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.rodape p {
+    color: var(--cor-texto-secundario);
+    font-size: 13px;
+}
+
+/* ========================================
+   RESPONSIVIDADE
+======================================== */
+
+@media (max-width: 600px) {
+    body {
+        padding: 25px 15px;
+        align-items: flex-start;
+    }
+
+    .cabecalho h1 {
+        font-size: 36px;
+    }
+
+    .cabecalho h2 {
+        font-size: 21px;
+    }
+
+    .formulario-container {
+        padding: 24px 20px;
+        border-radius: 12px;
+    }
+
+    form {
+        gap: 18px;
+    }
+}

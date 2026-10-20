@@ -1,0 +1,62 @@
+@startuml 02_models_cursos
+' MyFlow - models/cursos.py
+title MyFlow - models/cursos.py (classe Curso)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam classFontStyle bold
+hide circle
+
+package "models" {
+  class Curso {
+    -_id : int | None
+    -_nome : str
+    -_nivel : str
+    -_disciplinas : list[Disciplina]
+    .. properties (getter / setter com validação) ..
+    +id : int | None
+    +nome : str
+    +nivel : str
+    +disciplinas : list[Disciplina]
+    -- construtor --
+    +__init__(nome, nivel, id=None)
+    -- comportamentos --
+    +adicionar_disciplina(disciplina : Disciplina) : bool
+    +remover_disciplina(codigo : str) : bool
+    +buscar_disciplina(codigo : str) : Disciplina | None
+    +calcular_carga_horaria_total() : int
+    +calcular_progresso() : float
+    +exibir_ficha() : None
+    +__repr__() : str
+    +to_dict() : dict
+  }
+
+  class Disciplina {
+    +codigo : str
+    +carga_horaria : int
+    +concluida : bool
+    +to_dict() : dict
+  }
+}
+
+Curso "1" o-- "0..*" Disciplina : disciplinas >
+
+note right of Curso
+  <b>Regras de negócio</b>
+  - disciplinas NÃO é parâmetro do __init__:
+    todo curso nasce com disciplinas = []
+  - o getter de disciplinas devolve uma CÓPIA da lista;
+    use adicionar_disciplina / remover_disciplina
+  - adicionar_disciplina(): False se o código já existir
+  - remover_disciplina(): False se o código não existir
+  - calcular_progresso(): % de disciplinas concluídas
+    (0.0 se o curso não tiver disciplinas)
+end note
+
+note bottom of Disciplina
+  Agregação (losango vazio): a Disciplina
+  continua existindo fora do Curso.
+  Detalhes em 01_models_disciplinas.puml
+end note
+
+@enduml

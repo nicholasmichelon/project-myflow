@@ -1,0 +1,69 @@
+@startuml 06_repository_usuarios
+' MyFlow - repository/usuarios_repository.py
+title MyFlow - repository/usuarios_repository.py (classe UsuarioRepository)
+
+allowmixing
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam classFontStyle bold
+hide circle
+
+package "repository" {
+  class UsuarioRepository {
+    -- auxiliares (uso interno) --
+    -_id_do_curso(usuario : Usuario) : int | None
+    -_linha_para_objeto(linha) : Usuario
+    -- CRUD --
+    +inserir(usuario : Usuario) : int
+    +listar_todos() : list[Usuario]
+    +buscar_por_id(id_usuario : int) : Usuario | None
+    +buscar_por_email(email : str) : Usuario | None
+    +atualizar(usuario : Usuario) : bool
+    +excluir(id_usuario : int) : bool
+  }
+
+  class CursoRepository {
+    +buscar_por_id(id_curso : int) : Curso | None
+  }
+}
+
+package "models" {
+  class Usuario {
+    +id : int | None
+    +nome : str
+    +email : str
+    +curso : Curso | None
+  }
+  class Curso {
+    +id : int | None
+  }
+  Usuario --> "0..1" Curso
+}
+
+package "database" {
+  class conexao <<módulo>> {
+    +obter_conexao() : sqlite3.Connection
+  }
+}
+
+database "SQLite\ntabela usuarios" as db
+
+UsuarioRepository ..> Usuario : cria / persiste
+UsuarioRepository ..> CursoRepository : buscar_por_id()
+UsuarioRepository ..> conexao : obter_conexao()
+conexao ..> db
+
+note right of UsuarioRepository
+  <b>Observações</b>
+  - e-mail é único no banco
+  - _id_do_curso(): se o usuário tem curso,
+    o curso precisa ter sido salvo antes
+    (curso.id None -> ValueError)
+  - ao ler do banco, o curso volta carregado
+    com suas disciplinas (via CursoRepository)
+  - inserir() grava o id gerado no próprio objeto
+  - inserir() e atualizar() convertem
+    sqlite3.IntegrityError em ValueError
+end note
+
+@enduml

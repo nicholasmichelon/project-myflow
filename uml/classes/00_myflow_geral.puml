@@ -1,0 +1,133 @@
+@startuml 00_myflow_geral
+' MyFlow - visão geral (models + repository + database)
+title MyFlow - Diagrama de classes geral
+
+allowmixing
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam classFontStyle bold
+skinparam packageStyle rectangle
+skinparam linetype ortho
+hide circle
+
+package "models" #F4F8FF {
+  class Usuario {
+    +id : int | None
+    +nome : str
+    +email : str
+    +jornada : str
+    +objetivo : str
+    +tempo_disponivel : int
+    +curso : Curso | None
+    --
+    +definir_curso(curso) : bool
+    +remover_curso() : bool
+    +atualizar_tempo_disponivel(minutos) : bool
+    +exibir_ficha() : None
+    +to_dict() : dict
+  }
+
+  class Curso {
+    +id : int | None
+    +nome : str
+    +nivel : str
+    +disciplinas : list[Disciplina]
+    --
+    +adicionar_disciplina(disciplina) : bool
+    +remover_disciplina(codigo) : bool
+    +buscar_disciplina(codigo) : Disciplina | None
+    +calcular_carga_horaria_total() : int
+    +calcular_progresso() : float
+    +exibir_ficha() : None
+    +to_dict() : dict
+  }
+
+  class Disciplina {
+    +id : int | None
+    +nome : str
+    +codigo : str
+    +carga_horaria : int
+    +concluida : bool
+    --
+    +concluir() : bool
+    +reabrir() : bool
+    +exibir_ficha() : None
+    +to_dict() : dict
+  }
+}
+
+package "repository" #F4FFF6 {
+  class UsuarioRepository {
+    -_id_do_curso(usuario) : int | None
+    -_linha_para_objeto(linha) : Usuario
+    --
+    +inserir(usuario) : int
+    +listar_todos() : list[Usuario]
+    +buscar_por_id(id_usuario) : Usuario | None
+    +buscar_por_email(email) : Usuario | None
+    +atualizar(usuario) : bool
+    +excluir(id_usuario) : bool
+  }
+
+  class CursoRepository {
+    -_salvar_disciplina(conexao, disciplina, id_curso) : None
+    -_linha_para_objeto(conexao, linha) : Curso
+    --
+    +inserir(curso) : int
+    +listar_todos() : list[Curso]
+    +buscar_por_id(id_curso) : Curso | None
+    +buscar_por_nome(nome) : Curso | None
+    +atualizar(curso) : bool
+    +excluir(id_curso) : bool
+  }
+
+  class DisciplinaRepository {
+    +{static} linha_para_objeto(linha) : Disciplina
+    --
+    +inserir(disciplina, curso_id=None) : int
+    +listar_todos() : list[Disciplina]
+    +listar_por_curso(id_curso) : list[Disciplina]
+    +buscar_por_id(id_disciplina) : Disciplina | None
+    +buscar_por_codigo(codigo) : Disciplina | None
+    +atualizar(disciplina) : bool
+    +excluir(id_disciplina) : bool
+  }
+}
+
+package "database" #FFF8EE {
+  class conexao <<módulo>> {
+    +obter_conexao() : sqlite3.Connection
+  }
+}
+
+database "SQLite" as db
+
+' Relacionamentos entre models
+Usuario "0..*" --> "0..1" Curso : curso
+Curso "1" o-- "0..*" Disciplina : disciplinas
+
+' Cada repository persiste o seu model
+UsuarioRepository ..> Usuario
+CursoRepository ..> Curso
+DisciplinaRepository ..> Disciplina
+
+' Colaboração entre repositories
+UsuarioRepository ..> CursoRepository : carrega o curso
+CursoRepository ..> DisciplinaRepository : linha_para_objeto()
+
+' Acesso ao banco
+UsuarioRepository ..> conexao
+CursoRepository ..> conexao
+DisciplinaRepository ..> conexao
+conexao ..> db
+
+legend right
+  <b>Legenda</b>
+  ---> associação (um objeto conhece o outro)
+  o-- agregação (a parte existe sem o todo)
+  ..> dependência (usa, cria ou persiste)
+  +público  -privado  {static} método estático
+  Properties = getter/setter com validação (ValueError)
+endlegend
+
+@enduml

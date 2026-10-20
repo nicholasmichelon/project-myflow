@@ -1,0 +1,68 @@
+@startuml 03_models_usuarios
+' MyFlow - models/usuarios.py
+title MyFlow - models/usuarios.py (classe Usuario)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam classFontStyle bold
+hide circle
+
+package "models" {
+  class Usuario {
+    -_id : int | None
+    -_nome : str
+    -_email : str
+    -_jornada : str
+    -_objetivo : str
+    -_tempo_disponivel : int
+    -_curso : Curso | None
+    .. properties (getter / setter com validação) ..
+    +id : int | None
+    +nome : str
+    +email : str
+    +jornada : str
+    +objetivo : str
+    +tempo_disponivel : int
+    +curso : Curso | None
+    -- construtor --
+    +__init__(nome, email, jornada, objetivo, tempo_disponivel, id=None)
+    -- comportamentos --
+    +definir_curso(curso : Curso) : bool
+    +remover_curso() : bool
+    +atualizar_tempo_disponivel(minutos : int) : bool
+    +exibir_ficha() : None
+    +__repr__() : str
+    +to_dict() : dict
+  }
+
+  class Curso {
+    +id : int | None
+    +nome : str
+    +to_dict() : dict
+  }
+}
+
+Usuario "0..*" --> "0..1" Curso : curso >
+
+note right of Usuario
+  <b>Regras de negócio</b>
+  - cadastro em 3 etapas: jornada, objetivo
+    e tempo disponível
+  - curso NÃO é parâmetro do __init__:
+    todo usuário nasce com curso = None
+  - cada usuário tem no máximo um curso
+  - email deve conter "@"
+  - tempo_disponivel em minutos, inteiro > 0
+  - definir_curso(): False se já tiver curso
+  - remover_curso(): False se não tiver curso
+  - atualizar_tempo_disponivel(): captura o
+    ValueError do setter e retorna False
+end note
+
+note bottom of Curso
+  Associação simples: o Curso existe
+  independente do Usuario.
+  Detalhes em 02_models_cursos.puml
+end note
+
+@enduml

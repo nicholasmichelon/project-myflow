@@ -1,0 +1,60 @@
+@startuml 04_repository_disciplinas
+' MyFlow - repository/disciplinas_repository.py
+title MyFlow - repository/disciplinas_repository.py (classe DisciplinaRepository)
+
+allowmixing
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam classFontStyle bold
+hide circle
+
+package "repository" {
+  class DisciplinaRepository {
+    -- auxiliar --
+    +{static} linha_para_objeto(linha) : Disciplina
+    -- CRUD --
+    +inserir(disciplina : Disciplina, curso_id : int = None) : int
+    +listar_todos() : list[Disciplina]
+    +listar_por_curso(id_curso : int) : list[Disciplina]
+    +buscar_por_id(id_disciplina : int) : Disciplina | None
+    +buscar_por_codigo(codigo : str) : Disciplina | None
+    +atualizar(disciplina : Disciplina) : bool
+    +excluir(id_disciplina : int) : bool
+  }
+}
+
+package "models" {
+  class Disciplina {
+    +id : int | None
+    +nome : str
+    +codigo : str
+    +carga_horaria : int
+    +concluida : bool
+  }
+}
+
+package "database" {
+  class conexao <<módulo>> {
+    +obter_conexao() : sqlite3.Connection
+  }
+}
+
+database "SQLite\ntabela disciplinas" as db
+
+DisciplinaRepository ..> Disciplina : cria / persiste
+DisciplinaRepository ..> conexao : obter_conexao()
+conexao ..> db
+
+note right of DisciplinaRepository
+  <b>Observações</b>
+  - codigo é único no banco
+  - inserir() grava o id gerado no próprio objeto
+  - inserir() e atualizar() convertem
+    sqlite3.IntegrityError em ValueError
+  - atualizar() NÃO altera curso_id:
+    o vínculo é gerenciado pelo CursoRepository
+  - linha_para_objeto() é estática porque o
+    CursoRepository também a reutiliza
+end note
+
+@enduml
