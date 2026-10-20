@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MyFlow | Cadastro de Curso</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='styles.css') }}"
+    >
+</head>
+
+<body>
+    <main class="container">
+
+        <header class="cabecalho">
+            <div class="logo">MyFlow</div>
+
+            <h1>Vamos organizar seus estudos?</h1>
+
+            <p>
+                Olá, {{ usuario.nome }}!
+                Configure seu curso para continuar.
+            </p>
+        </header>
+
+        <section class="formulario-container">
+
+            {% if usuario.curso %}
+
+                <div class="mensagem sucesso" role="status">
+                    <strong>Curso cadastrado!</strong>
+                    <p>
+                        Seu curso está associado ao seu perfil.
+                    </p>
+                </div>
+
+                <div class="titulo-formulario">
+                    <h2>Seu curso</h2>
+                    <p>Confira os dados cadastrados.</p>
+                </div>
+
+                <div class="curso-resumo">
+
+                    <div class="curso-detalhe">
+                        <span>Nome do curso</span>
+                        <strong>{{ usuario.curso.nome }}</strong>
+                    </div>
+
+                    <div class="curso-detalhe">
+                        <span>Nível de formação</span>
+                        <strong>{{ usuario.curso.nivel }}</strong>
+                    </div>
+
+                    <div class="curso-detalhe">
+                        <span>Disciplinas cadastradas</span>
+                        <strong>
+                            {{ usuario.curso.disciplinas|length }}
+                        </strong>
+                    </div>
+
+                </div>
+
+                <a
+                    href="{{ url_for('pagina_disciplinas') }}"
+                    class="botao-cadastro link-botao"
+                >
+                    Cadastrar disciplinas
+                    <span aria-hidden="true">&rarr;</span>
+                </a>
+
+            {% else %}
+
+                <div class="titulo-formulario">
+                    <h2>Cadastre seu curso</h2>
+                    <p>Informe o nome e o nível do curso.</p>
+                </div>
+
+                {% if erro %}
+                    <div class="mensagem erro" role="alert">
+                        <strong>Não foi possível cadastrar o curso.</strong>
+                        <p>{{ erro }}</p>
+                    </div>
+                {% endif %}
+
+                <form
+                    action="{{ url_for('pagina_curso') }}"
+                    method="POST"
+                >
+
+                    <div class="campo">
+                        <label for="nome">Nome do curso</label>
+
+                        <input
+                            type="text"
+                            id="nome"
+                            name="nome"
+                            placeholder="Ex.: Negócios Digitais"
+                            required
+                        >
+                    </div>
+
+                    <div class="campo">
+                        <label for="nivel">Nível do curso</label>
+
+                        <select
+                            id="nivel"
+                            name="nivel"
+                            required
+                        >
+                            <option value="">
+                                Selecione o nível
+                            </option>
+
+                            <option value="Ensino Fundamental">
+                                Ensino Fundamental
+                            </option>
+
+                            <option value="Ensino Médio">
+                                Ensino Médio
+                            </option>
+
+                            <option value="Graduação">
+                                Graduação
+                            </option>
+
+                            <option value="Pós-graduação">
+                                Pós-graduação
+                            </option>
+
+                            <option value="Curso livre">
+                                Curso livre
+                            </option>
+
+                            <option value="Certificação">
+                                Certificação
+                            </option>
+
+                            <option value="Outro">
+                                Outro
+                            </option>
+                        </select>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="botao-cadastro"
+                    >
+                        Cadastrar curso
+                        <span aria-hidden="true">&rarr;</span>
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+        </section>
+
+        <footer class="rodape">
+            <p>MyFlow — um passo de cada vez.</p>
+        </footer>
+
+    </main>
+</body>
+
+</html>

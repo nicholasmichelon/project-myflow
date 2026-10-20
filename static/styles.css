@@ -1,6 +1,6 @@
-/* ========================================
-   MYFLOW - ESTILOS GERAIS
-======================================== */
+/* =========================================
+   MYFLOW - CONFIGURAÇÕES GERAIS
+========================================= */
 
 * {
     margin: 0;
@@ -14,78 +14,109 @@
     --cor-fundo: #F3F6FA;
     --cor-branca: #FFFFFF;
     --cor-texto: #263445;
-    --cor-texto-secundario: #65758B;
+    --cor-secundaria: #65758B;
     --cor-borda: #D8E1EC;
     --cor-foco: #B9D9F5;
+    --cor-sucesso-fundo: #E7F7ED;
+    --cor-sucesso-texto: #216E41;
+    --cor-erro-fundo: #FFF0F0;
+    --cor-erro-texto: #A52B2B;
 }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: var(--cor-fundo);
-    color: var(--cor-texto);
     min-height: 100vh;
-    line-height: 1.6;
     padding: 40px 20px;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--cor-texto);
+    background: var(--cor-fundo);
 
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* ========================================
+/* =========================================
    CONTAINER PRINCIPAL
-======================================== */
+========================================= */
 
 .container {
     width: 100%;
-    max-width: 600px;
+    max-width: 560px;
     margin: 0 auto;
 }
 
-/* ========================================
+/* =========================================
    CABEÇALHO
-======================================== */
+========================================= */
 
 .cabecalho {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 28px;
 }
 
-.cabecalho h1 {
+.logo {
     color: var(--cor-principal);
-    font-size: 42px;
-    font-weight: 700;
+    font-size: 40px;
+    font-weight: 800;
     letter-spacing: -1.5px;
     margin-bottom: 8px;
 }
 
-.cabecalho h2 {
+.cabecalho h1 {
     font-size: 25px;
-    font-weight: 600;
-    margin-bottom: 10px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 12px;
 }
 
 .cabecalho p {
-    color: var(--cor-texto-secundario);
+    max-width: 420px;
+    margin: 0 auto;
+    color: var(--cor-secundaria);
     font-size: 15px;
 }
 
-/* ========================================
-   FORMULÁRIO
-======================================== */
+/* =========================================
+   CARTÃO DO FORMULÁRIO
+========================================= */
 
 .formulario-container {
+    width: 100%;
+    padding: 32px;
+
     background: var(--cor-branca);
-    padding: 35px;
-    border-radius: 16px;
     border: 1px solid var(--cor-borda);
+    border-radius: 16px;
+
     box-shadow: 0 8px 28px rgba(35, 57, 82, 0.07);
 }
+
+.titulo-formulario {
+    margin-bottom: 25px;
+}
+
+.titulo-formulario h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.titulo-formulario p {
+    color: var(--cor-secundaria);
+    font-size: 13px;
+}
+
+/* =========================================
+   FORMULÁRIO E CAMPOS
+========================================= */
 
 form {
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 20px;
 }
 
 .campo {
@@ -95,28 +126,31 @@ form {
 }
 
 .campo label {
+    color: var(--cor-texto);
     font-size: 14px;
     font-weight: 600;
-    color: var(--cor-texto);
 }
 
-/* ========================================
-   CAMPOS DE ENTRADA
-======================================== */
+/* Campos de entrada */
 
 .campo input,
 .campo select,
 .campo textarea {
     width: 100%;
     padding: 12px 14px;
+
+    background: var(--cor-branca);
+    color: var(--cor-texto);
+
     border: 1px solid var(--cor-borda);
     border-radius: 8px;
-    background-color: var(--cor-branca);
-    color: var(--cor-texto);
+
     font-family: inherit;
     font-size: 14px;
-    transition: border-color 0.2s ease,
-                box-shadow 0.2s ease;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .campo input,
@@ -125,7 +159,7 @@ form {
 }
 
 .campo textarea {
-    min-height: 110px;
+    min-height: 105px;
     resize: vertical;
 }
 
@@ -147,38 +181,66 @@ form {
 /* Texto auxiliar */
 
 .campo small {
-    color: var(--cor-texto-secundario);
+    color: var(--cor-secundaria);
     font-size: 12px;
 }
 
-/* ========================================
-   BOTÃO DE CADASTRO
-======================================== */
+/* =========================================
+   CAMPO DE TEMPO
+========================================= */
+
+.campo-tempo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.campo-tempo input {
+    flex: 1;
+    min-width: 0;
+}
+
+.campo-tempo span {
+    color: var(--cor-secundaria);
+    white-space: nowrap;
+}
+
+/* =========================================
+   BOTÃO CONTINUAR
+========================================= */
 
 .botao-cadastro {
     width: 100%;
-    min-height: 48px;
+    min-height: 49px;
     margin-top: 5px;
-    padding: 13px 18px;
+    padding: 12px 18px;
 
-    background-color: var(--cor-principal);
-    color: var(--cor-branca);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 
     border: none;
     border-radius: 8px;
 
+    background: var(--cor-principal);
+    color: var(--cor-branca);
+
     font-family: inherit;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
 
     cursor: pointer;
 
-    transition: background-color 0.2s ease,
-                transform 0.2s ease;
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .botao-cadastro:hover {
-    background-color: var(--cor-principal-hover);
+    background: var(--cor-principal-hover);
+    box-shadow: 0 4px 12px rgba(55, 118, 171, 0.20);
 }
 
 .botao-cadastro:active {
@@ -190,9 +252,58 @@ form {
     outline-offset: 3px;
 }
 
-/* ========================================
+.botao-cadastro span {
+    font-size: 19px;
+    line-height: 1;
+}
+
+/* =========================================
+   MENSAGENS DE SUCESSO E ERRO
+========================================= */
+
+.mensagem {
+    padding: 13px 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.mensagem strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.mensagem p {
+    margin: 0;
+}
+
+.mensagem.sucesso {
+    background: var(--cor-sucesso-fundo);
+    color: var(--cor-sucesso-texto);
+    border: 1px solid #B9E5C8;
+}
+
+.mensagem.erro {
+    background: var(--cor-erro-fundo);
+    color: var(--cor-erro-texto);
+    border: 1px solid #F0C2C2;
+}
+
+/* =========================================
+   NOTA DE PRIVACIDADE
+========================================= */
+
+.nota-privacidade {
+    margin-top: 20px;
+    text-align: center;
+    color: var(--cor-secundaria);
+    font-size: 12px;
+}
+
+/* =========================================
    RODAPÉ
-======================================== */
+========================================= */
 
 .rodape {
     text-align: center;
@@ -200,13 +311,13 @@ form {
 }
 
 .rodape p {
-    color: var(--cor-texto-secundario);
+    color: var(--cor-secundaria);
     font-size: 13px;
 }
 
-/* ========================================
+/* =========================================
    RESPONSIVIDADE
-======================================== */
+========================================= */
 
 @media (max-width: 600px) {
     body {
@@ -214,12 +325,16 @@ form {
         align-items: flex-start;
     }
 
-    .cabecalho h1 {
+    .logo {
         font-size: 36px;
     }
 
-    .cabecalho h2 {
-        font-size: 21px;
+    .cabecalho h1 {
+        font-size: 22px;
+    }
+
+    .cabecalho p {
+        font-size: 14px;
     }
 
     .formulario-container {
@@ -230,4 +345,172 @@ form {
     form {
         gap: 18px;
     }
+}
+
+@media (max-width: 360px) {
+    .formulario-container {
+        padding: 20px 15px;
+    }
+
+    .cabecalho h1 {
+        font-size: 20px;
+    }
+}
+
+/* =========================================
+   RESUMO DO CURSO
+========================================= */
+
+.curso-resumo {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+
+    margin-top: 10px;
+
+    border: 1px solid var(--cor-borda);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.curso-detalhe {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    padding: 16px;
+
+    background: var(--cor-branca);
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.curso-detalhe:last-child {
+    border-bottom: none;
+}
+
+.curso-detalhe span {
+    color: var(--cor-secundaria);
+    font-size: 12px;
+}
+
+.curso-detalhe strong {
+    color: var(--cor-texto);
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+/* =========================================
+   CADASTRO DE DISCIPLINAS
+========================================= */
+
+.resumo-curso {
+    padding: 18px;
+    margin-bottom: 25px;
+    background: #F3F6FA;
+    border: 1px solid var(--cor-borda);
+    border-radius: 10px;
+}
+
+.resumo-curso > span {
+    color: var(--cor-secundaria);
+    font-size: 12px;
+}
+
+.resumo-curso h2 {
+    margin-top: 4px;
+    font-size: 20px;
+}
+
+.resumo-curso p {
+    margin-top: 4px;
+    color: var(--cor-secundaria);
+}
+
+.secao-disciplinas {
+    margin-top: 32px;
+}
+
+.lista-disciplinas {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.disciplina-item {
+    padding: 16px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 10px;
+    background: var(--cor-branca);
+}
+
+.disciplina-cabecalho {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.disciplina-cabecalho h3 {
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.disciplina-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 10px;
+    color: var(--cor-secundaria);
+    font-size: 12px;
+}
+
+.etiqueta {
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.etiqueta.andamento {
+    color: #285B86;
+    background: #E4ECFF;
+}
+
+.etiqueta.concluida {
+    color: #216E41;
+    background: #E7F7ED;
+}
+
+.lista-vazia {
+    padding: 20px;
+    color: var(--cor-secundaria);
+    background: #F8FAFC;
+    border: 1px dashed var(--cor-borda);
+    border-radius: 10px;
+    text-align: center;
+    font-size: 13px;
+}
+
+.link-botao {
+    margin-top: 24px;
+    text-decoration: none;
+}
+
+.botao-secundario {
+    display: block;
+    margin-top: 24px;
+    padding: 12px 16px;
+    text-align: center;
+    color: var(--cor-principal);
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.botao-secundario:hover {
+    background: #F3F6FA;
 }
