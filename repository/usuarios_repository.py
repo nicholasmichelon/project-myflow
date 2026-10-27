@@ -38,6 +38,7 @@ class UsuarioRepository:
         usuario = Usuario(
             linha['nome'], linha['email'], linha['jornada'],
             linha['objetivo'], linha['tempo_disponivel'], id=linha['id'],
+            senha_hash=(linha['senha_hash'] if 'senha_hash' in linha.keys() else None),
         )
         if linha['curso_id'] is not None:
             usuario.curso = CursoRepository().buscar_por_id(linha['curso_id'])
@@ -54,10 +55,11 @@ class UsuarioRepository:
         try:
             cursor = conexao.execute(
                 'INSERT INTO usuarios '
-                '(nome, email, jornada, objetivo, tempo_disponivel, curso_id) '
-                'VALUES (?, ?, ?, ?, ?, ?)',
+                '(nome, email, jornada, objetivo, tempo_disponivel, curso_id, senha_hash) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?)',
                 (usuario.nome, usuario.email, usuario.jornada,
-                 usuario.objetivo, usuario.tempo_disponivel, id_curso),
+                 usuario.objetivo, usuario.tempo_disponivel, id_curso,
+                 usuario.senha_hash),
             )
             conexao.commit()
             usuario.id = cursor.lastrowid
@@ -108,9 +110,11 @@ class UsuarioRepository:
         try:
             cursor = conexao.execute(
                 'UPDATE usuarios SET nome = ?, email = ?, jornada = ?, '
-                'objetivo = ?, tempo_disponivel = ?, curso_id = ? WHERE id = ?',
+                'objetivo = ?, tempo_disponivel = ?, curso_id = ?, '
+                'senha_hash = ? WHERE id = ?',
                 (usuario.nome, usuario.email, usuario.jornada,
-                 usuario.objetivo, usuario.tempo_disponivel, id_curso, usuario.id),
+                 usuario.objetivo, usuario.tempo_disponivel, id_curso,
+                 usuario.senha_hash, usuario.id),
             )
             conexao.commit()
             return cursor.rowcount > 0

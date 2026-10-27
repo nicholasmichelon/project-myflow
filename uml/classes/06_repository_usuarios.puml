@@ -32,6 +32,7 @@ package "models" {
     +id : int | None
     +nome : str
     +email : str
+    +senha_hash : str | None
     +curso : Curso | None
   }
   class Curso {
@@ -56,6 +57,7 @@ conexao ..> db
 note right of UsuarioRepository
   <b>Observações</b>
   - e-mail é único no banco
+  - a senha é armazenada como hash, nunca em texto puro
   - _id_do_curso(): se o usuário tem curso,
     o curso precisa ter sido salvo antes
     (curso.id None -> ValueError)

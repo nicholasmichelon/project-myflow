@@ -27,7 +27,6 @@ class DisciplinaRepository:
         disciplina = Disciplina(
             linha['nome'], linha['codigo'], linha['carga_horaria'], id=linha['id']
         )
-        disciplina.concluida = bool(linha['concluida'])
         return disciplina
 
     def inserir(self, disciplina, curso_id=None):
@@ -38,10 +37,10 @@ class DisciplinaRepository:
         try:
             cursor = conexao.execute(
                 'INSERT INTO disciplinas '
-                '(nome, codigo, carga_horaria, concluida, curso_id) '
-                'VALUES (?, ?, ?, ?, ?)',
+                '(nome, codigo, carga_horaria, curso_id) '
+                'VALUES (?, ?, ?, ?)',
                 (disciplina.nome, disciplina.codigo, disciplina.carga_horaria,
-                 int(disciplina.concluida), curso_id),
+                 curso_id),
             )
             conexao.commit()
             disciplina.id = cursor.lastrowid
@@ -110,9 +109,9 @@ class DisciplinaRepository:
         try:
             cursor = conexao.execute(
                 'UPDATE disciplinas SET nome = ?, codigo = ?, '
-                'carga_horaria = ?, concluida = ? WHERE id = ?',
+                'carga_horaria = ? WHERE id = ?',
                 (disciplina.nome, disciplina.codigo, disciplina.carga_horaria,
-                 int(disciplina.concluida), disciplina.id),
+                 disciplina.id),
             )
             conexao.commit()
             return cursor.rowcount > 0

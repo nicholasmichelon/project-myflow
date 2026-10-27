@@ -90,6 +90,33 @@
                 </div>
 
                 <div class="campo">
+                    <label for="senha">Senha</label>
+                    <input
+                        type="password"
+                        id="senha"
+                        name="senha"
+                        minlength="8"
+                        autocomplete="new-password"
+                        placeholder="Crie uma senha com pelo menos 8 caracteres"
+                        required
+                    >
+                    <small>Use pelo menos 8 caracteres.</small>
+                </div>
+
+                <div class="campo">
+                    <label for="confirmar_senha">Confirmar senha</label>
+                    <input
+                        type="password"
+                        id="confirmar_senha"
+                        name="confirmar_senha"
+                        minlength="8"
+                        autocomplete="new-password"
+                        placeholder="Digite a senha novamente"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
                     <label for="jornada">
                         Em qual etapa de estudos você está?
                     </label>
@@ -185,6 +212,11 @@
             <p class="nota-privacidade">
                 Seus dados serão utilizados para organizar
                 sua experiência de aprendizagem no MyFlow.
+            </p>
+
+            <p class="texto-alternativo">
+                Já tem uma conta?
+                <a href="{{ url_for('pagina_login') }}">Entrar</a>
             </p>
 
         </section>

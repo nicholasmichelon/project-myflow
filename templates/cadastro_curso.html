@@ -27,6 +27,12 @@
             </p>
         </header>
 
+        <div class="barra-acoes">
+            <form action="{{ url_for('sair') }}" method="POST" class="form-sair">
+                <button type="submit" class="botao-sair">Sair da conta</button>
+            </form>
+        </div>
+
         <section class="formulario-container">
 
             {% if usuario.curso %}

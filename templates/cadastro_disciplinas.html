@@ -19,6 +19,12 @@
             <p>Olá, {{ usuario.nome }}! Gerencie as disciplinas do seu curso.</p>
         </header>
 
+        <div class="barra-acoes">
+            <form action="{{ url_for('sair') }}" method="POST" class="form-sair">
+                <button type="submit" class="botao-sair">Sair da conta</button>
+            </form>
+        </div>
+
         <section class="formulario-container">
             <div class="resumo-curso">
                 <span>Seu curso</span>
@@ -28,10 +34,25 @@
                     Carga horária total:
                     {{ curso.calcular_carga_horaria_total() }}h
                 </p>
-                <p>
-                    Progresso do curso:
-                    {{ "%.1f"|format(curso.calcular_progresso()) }}%
-                </p>
+                <div class="progresso-resumo">
+                    <p>
+                        Seu progresso:
+                        <strong>{{ "%.1f"|format(progresso_percentual) }}%</strong>
+                    </p>
+                    <div
+                        class="progresso-trilho"
+                        role="progressbar"
+                        aria-label="Progresso individual no curso"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-valuenow="{{ '%.1f'|format(progresso_percentual) }}"
+                    >
+                        <div
+                            class="progresso-preenchimento"
+                            style="width: {{ progresso_percentual }}%;"
+                        ></div>
+                    </div>
+                </div>
             </div>
 
             {% if sucesso %}
@@ -108,22 +129,48 @@
                     <p>Total: {{ disciplinas|length }} disciplina(s)</p>
                 </div>
 
-                {% if disciplinas %}
+                {% if itens_disciplinas %}
                     <div class="lista-disciplinas">
-                        {% for disciplina in disciplinas %}
+                        {% for item in itens_disciplinas %}
+                            {% set disciplina = item.disciplina %}
                             <article class="disciplina-item">
                                 <div class="disciplina-cabecalho">
                                     <h3>{{ disciplina.nome }}</h3>
-                                    {% if disciplina.concluida %}
-                                        <span class="etiqueta concluida">Concluída</span>
+                                    {% if item.concluida %}
+                                        <span class="etiqueta concluida">Concluída por você</span>
                                     {% else %}
                                         <span class="etiqueta andamento">Em andamento</span>
                                     {% endif %}
                                 </div>
+
                                 <div class="disciplina-meta">
                                     <span>Código: {{ disciplina.codigo }}</span>
                                     <span>Carga horária: {{ disciplina.carga_horaria }}h</span>
                                 </div>
+
+                                <form
+                                    action="{{ url_for('pagina_disciplinas') }}"
+                                    method="POST"
+                                    class="form-progresso"
+                                >
+                                    <input
+                                        type="hidden"
+                                        name="disciplina_id"
+                                        value="{{ disciplina.id }}"
+                                    >
+
+                                    {% if item.concluida %}
+                                        <input type="hidden" name="acao" value="reabrir">
+                                        <button type="submit" class="botao-progresso secundario">
+                                            Marcar como em andamento
+                                        </button>
+                                    {% else %}
+                                        <input type="hidden" name="acao" value="concluir">
+                                        <button type="submit" class="botao-progresso">
+                                            Marcar como concluída
+                                        </button>
+                                    {% endif %}
+                                </form>
                             </article>
                         {% endfor %}
                     </div>

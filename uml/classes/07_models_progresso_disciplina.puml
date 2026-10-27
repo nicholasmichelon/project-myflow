@@ -1,0 +1,43 @@
+@startuml 07_models_progresso_disciplina
+title MyFlow - Progresso individual por usuário e disciplina
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam classFontStyle bold
+hide circle
+
+class Usuario {
+  +id : int
+  +email : str
+}
+
+class Disciplina {
+  +id : int
+  +nome : str
+  +codigo : str
+}
+
+class ProgressoDisciplina {
+  -_usuario_id : int
+  -_disciplina_id : int
+  -_concluida : bool
+  --
+  +usuario_id : int
+  +disciplina_id : int
+  +concluida : bool
+  --
+  +concluir() : bool
+  +reabrir() : bool
+  +to_dict() : dict
+  +__repr__() : str
+}
+
+Usuario "1" -- "0..*" ProgressoDisciplina : progresso próprio
+Disciplina "1" -- "0..*" ProgressoDisciplina : progresso por usuário
+
+note bottom of ProgressoDisciplina
+  A chave lógica é o par (usuario_id, disciplina_id).
+  Assim, duas pessoas podem cursar a mesma disciplina
+  e manter estados de conclusão diferentes.
+end note
+@enduml

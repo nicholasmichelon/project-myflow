@@ -27,8 +27,9 @@ from models.cursos import Curso
 
 
 class Usuario:
-    def __init__(self, nome, email, jornada, objetivo, tempo_disponivel, id=None):
+    def __init__(self, nome, email, jornada, objetivo, tempo_disponivel, id=None, senha_hash=None):
         self.id = id
+        self.senha_hash = senha_hash
         self.nome = nome
         self.email = email
         self.jornada = jornada
@@ -50,6 +51,21 @@ class Usuario:
         ):
             raise ValueError('id deve ser None ou um inteiro positivo')
         self._id = valor
+
+    # ---------------------------------------------------------
+    # Property: senha_hash (nunca armazenar senha em texto puro)
+    # ---------------------------------------------------------
+    @property
+    def senha_hash(self):
+        return self._senha_hash
+
+    @senha_hash.setter
+    def senha_hash(self, valor):
+        if valor is not None and (
+            not isinstance(valor, str) or not valor.strip()
+        ):
+            raise ValueError("senha_hash deve ser None ou uma string não vazia")
+        self._senha_hash = valor
 
     # ---------------------------------------------------------
     # Property: nome

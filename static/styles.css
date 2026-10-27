@@ -514,3 +514,106 @@ form {
 .botao-secundario:hover {
     background: #F3F6FA;
 }
+
+/* =========================================
+   LOGIN, SESSÃO E PROGRESSO INDIVIDUAL
+========================================= */
+
+.texto-alternativo {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--cor-secundaria);
+}
+
+.texto-alternativo a {
+    color: var(--cor-principal);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.texto-alternativo a:hover {
+    text-decoration: underline;
+}
+
+.barra-acoes {
+    display: flex;
+    justify-content: flex-end;
+    margin: -12px 0 18px;
+}
+
+.form-sair {
+    display: block;
+    margin: 0;
+}
+
+.botao-sair {
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    padding: 8px 13px;
+    background: var(--cor-branca);
+    color: var(--cor-secundaria);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.botao-sair:hover {
+    color: var(--cor-principal);
+    border-color: var(--cor-principal);
+}
+
+.form-progresso {
+    display: block;
+    margin-top: 14px;
+}
+
+.botao-progresso {
+    padding: 8px 12px;
+    border: 1px solid var(--cor-principal);
+    border-radius: 7px;
+    background: var(--cor-principal);
+    color: var(--cor-branca);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.botao-progresso:hover {
+    background: var(--cor-principal-hover);
+}
+
+.botao-progresso.secundario {
+    color: var(--cor-principal);
+    background: var(--cor-branca);
+}
+
+.botao-progresso.secundario:hover {
+    background: #F3F6FA;
+}
+
+.progresso-resumo {
+    margin-top: 12px;
+}
+
+.progresso-trilho {
+    height: 9px;
+    margin-top: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #E4EAF1;
+}
+
+.progresso-preenchimento {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--cor-principal);
+    transition: width 0.2s ease;
+}
+
+@media (max-width: 600px) {
+    .barra-acoes {
+        margin-top: -4px;
+    }
+}

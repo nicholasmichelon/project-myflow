@@ -1,21 +1,23 @@
-# MyFlow — instruções e revisão
+# MyFlow — Projeto de POO
+
+Aplicação web feita com Flask e SQLite para cadastro de usuários, cursos e disciplinas, com login e acompanhamento individual do progresso.
 
 ## Executar localmente (Windows / VS Code)
 
 1. Abra o terminal na pasta que contém `app.py`.
-2. Instale as dependências no ambiente virtual:
+2. Instale as dependências:
 
    ```powershell
    .\.venv\Scripts\python.exe -m pip install -r requirements.txt
    ```
 
-3. Se estiver usando um banco antigo que ainda impede vários usuários de compartilhar o mesmo curso, faça uma cópia de segurança de `database/banco.db` e execute a migração uma vez:
+3. Se o banco antigo ainda tiver `UNIQUE` isolado em `usuarios.curso_id`, faça backup de `database/banco.db` e execute uma vez:
 
    ```powershell
    .\.venv\Scripts\python.exe database\corrigir_banco.py
    ```
 
-   O script informa se o banco já permite compartilhar cursos e não o migra novamente nesse caso.
+   Se você já executou essa migração e o banco permite que usuários compartilhem cursos, não precisa repeti-la.
 
 4. Inicie o aplicativo:
 
@@ -25,46 +27,61 @@
 
 5. Acesse <http://127.0.0.1:5000>.
 
-## Estrutura funcional
+O `app.py` chama `inicializar_banco()`, que cria tabelas ausentes e migra bancos antigos para incluir `senha_hash` e `progresso_disciplinas`. Faça backup do banco antes de atualizar um projeto que contenha dados importantes. O ZIP de entrega omite `database/banco.db` intencionalmente para não sobrescrever os dados locais; mantenha seu arquivo existente nessa pasta.
 
-- `models/`: regras e objetos `Usuario`, `Curso` e `Disciplina`.
-- `repository/`: operações SQLite dos objetos.
-- `database/`: conexão, schema e migração compatível com curso compartilhado.
-- `templates/`: cadastro do usuário, curso e disciplinas.
-- `static/styles.css`: estilos das telas.
+## Funcionalidades
+
+- Cadastro de usuário com nome, e-mail, jornada, objetivo, tempo diário e senha.
+- Login e saída da conta.
+- Um curso associado a cada usuário; o mesmo curso pode ser compartilhado por vários usuários.
+- Várias disciplinas em cada curso.
+- Progresso de conclusão separado por usuário e disciplina.
+
+## Organização principal
+
+- `models/`: classes `Usuario`, `Curso`, `Disciplina` e `ProgressoDisciplina`.
+- `repository/`: repositórios SQLite, incluindo `ProgressoDisciplinaRepository`.
+- `database/`: conexão, `schema.sql` e migrações.
+- `templates/`: cadastro, login, curso e disciplinas.
+- `static/styles.css`: estilo das páginas.
 - `uml/`: diagramas de classes e sequência.
+- `scripts/definir_senha_usuario.py`: define senha para uma conta antiga que foi criada antes da implementação do login.
 
-## Correções feitas nesta revisão
+## Login e contas antigas
 
-- Criado `templates/cadastro_disciplinas.html`, que era referenciado na rota Flask mas não existia no projeto recebido.
-- Adicionados os estilos CSS da lista de disciplinas, resumo do curso, etiquetas e botão de retorno.
-- Mantida a possibilidade de vários usuários usarem o mesmo curso.
-- `CursoRepository.buscar_por_nome()` passou a comparar nomes com `casefold()` em Python; o `NOCASE` padrão do SQLite não trata corretamente toda capitalização de letras acentuadas.
-- `Curso.buscar_disciplina()` agora compara códigos sem diferenciar capitalização, em sintonia com a regra de unicidade dentro do curso.
-- `DisciplinaRepository.buscar_por_codigo()` aceita `curso_id` opcional, já que o código da disciplina é único **por curso**, e não globalmente.
-- O setter `Usuario.curso` impede substituir diretamente um curso por outro sem removê-lo primeiro.
-- O cadastro mostra mensagem amigável quando o e-mail já existe e mantém os valores preenchidos após erros.
-- A migração `database/corrigir_banco.py` agora verifica se a alteração já foi aplicada antes de modificar a tabela.
-- Atualizados os diagramas de sequência para refletir o fluxo real de cadastro em etapas.
-- Adicionados arquivos `__init__.py` para explicitar os pacotes Python.
+Novos usuários criam uma senha de pelo menos 8 caracteres. O MyFlow armazena o hash gerado por `werkzeug.security`, nunca a senha em texto puro.
 
-## Limitações conhecidas / próximos passos
+Contas criadas antes da implementação do login têm `senha_hash` vazio. Para definir uma senha de uma dessas contas no ambiente local, execute:
 
-- `Disciplina.concluida` está armazenado na disciplina do curso compartilhado. Portanto, se futuramente um usuário marcar uma disciplina como concluída, esse estado será comum a todos os usuários associados ao curso. Para progresso individual, será necessário criar uma relação própria entre usuário e disciplina.
-- O projeto ainda não tem fluxo de login para usuários existentes. A sessão representa o usuário que acabou de se cadastrar.
-- A chave secreta padrão em `app.py` é apenas para desenvolvimento local. Antes de publicar, defina a variável de ambiente `MYFLOW_SECRET_KEY`.
-- A pasta `website/` parece ser um scaffold Docusaurus separado da aplicação Flask; ela não é necessária para executar `app.py`.
+```powershell
+.\.venv\Scripts\python.exe scripts\definir_senha_usuario.py
+```
 
-## Verificações executadas nesta revisão
+O script solicita o e-mail existente e a nova senha. Ainda não há recuperação de senha por e-mail configurada.
 
-- Sintaxe Python analisada em todos os arquivos `.py`.
-- Templates Jinja compilados.
-- Testes de integração dos repositórios contra um banco SQLite temporário:
-  - dois usuários compartilham o mesmo curso;
-  - disciplinas persistem e são recuperadas para ambos;
-  - códigos duplicados com diferenças de maiúsculas/minúsculas são bloqueados dentro do curso;
-  - e-mails duplicados são rejeitados;
-  - substituição direta de curso é bloqueada;
-  - migração executada contra um schema antigo e novamente sem danificar o banco.
+## Progresso individual
 
-O servidor HTTP Flask não foi executado neste ambiente de revisão porque Flask não está instalado no interpretador utilizado para os testes. A dependência está declarada em `requirements.txt`; execute o projeto no seu `.venv` para validar o fluxo no navegador.
+As disciplinas pertencem ao curso compartilhado. A conclusão individual é armazenada em `progresso_disciplinas`, com chave composta `(usuario_id, disciplina_id)`. Assim, duas pessoas do mesmo curso podem ter progressos diferentes.
+
+A migração de dados antigos copia o estado de conclusão legado para os usuários que já estavam associados ao curso no momento da atualização. Essa migração é executada uma única vez. Novos usuários começam com seu próprio progresso pendente.
+
+A coluna antiga `disciplinas.concluida`, quando existente em um banco anterior, é mantida apenas para compatibilidade durante a migração; a aplicação atual não a utiliza como fonte de progresso individual.
+
+## Segurança e limitações
+
+- `MYFLOW_SECRET_KEY` pode ser definida como variável de ambiente. A chave padrão do `app.py` é apenas para desenvolvimento local.
+- Não há recuperação de senha por e-mail nem proteção CSRF implementada. O projeto é adequado a um protótipo acadêmico local; antes de publicar na internet, implemente esses controles.
+- A pasta `website/` é um projeto Docusaurus separado e não é necessária para executar a aplicação Flask.
+
+## Verificações desta revisão
+
+- Compilação de sintaxe dos arquivos Python.
+- Compilação dos templates Jinja.
+- Teste dos repositórios com SQLite temporário:
+  - vários usuários compartilham um curso;
+  - cada usuário mantém estado de conclusão diferente para a mesma disciplina;
+  - o percentual de progresso é calculado por usuário;
+  - e-mails duplicados são recusados;
+  - migração de banco legado conserva usuários e estados de conclusão.
+
+O servidor Flask não foi executado neste ambiente de revisão, pois Flask não está instalado no interpretador utilizado para os testes. A dependência está listada em `requirements.txt`; execute dentro do seu `.venv` para validar a interface no navegador.

@@ -22,8 +22,8 @@ Regras de negócio:
   ou None se não existir
 - calcular_carga_horaria_total: soma a carga horária de todas as
   disciplinas do curso
-- calcular_progresso: percentual (0 a 100) de disciplinas concluídas;
-  curso sem disciplinas tem progresso 0.0
+- o progresso não pertence ao Curso; é individual e fica em
+  ProgressoDisciplina / ProgressoDisciplinaRepository
 """
 
 from models.disciplinas import Disciplina
@@ -125,21 +125,13 @@ class Curso:
     def calcular_carga_horaria_total(self):
         return sum(d.carga_horaria for d in self._disciplinas)
 
-    def calcular_progresso(self):
-        if not self._disciplinas:
-            return 0.0
-        concluidas = sum(1 for d in self._disciplinas if d.concluida)
-        return concluidas / len(self._disciplinas) * 100
-
     def exibir_ficha(self):
         print(f'Curso: {self.nome}')
         print(f'Nível: {self.nivel}')
         print(f'Disciplinas: {len(self._disciplinas)}')
         print(f'Carga horária total: {self.calcular_carga_horaria_total()}h')
-        print(f'Progresso: {self.calcular_progresso():.1f}%')
-        for d in self._disciplinas:
-            situacao = 'concluída' if d.concluida else 'em andamento'
-            print(f'  - {d.codigo} | {d.nome} ({situacao})')
+        for disciplina in self._disciplinas:
+            print(f'  - {disciplina.codigo} | {disciplina.nome}')
 
     # ---------------------------------------------------------
     # Representação textual do objeto (usada em prints/debug)
@@ -160,5 +152,4 @@ class Curso:
             'nivel': self.nivel,
             'disciplinas': [d.to_dict() for d in self._disciplinas],
             'carga_horaria_total': self.calcular_carga_horaria_total(),
-            'progresso': self.calcular_progresso(),
         }

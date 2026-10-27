@@ -18,6 +18,7 @@ package "models" #F4F8FF {
     +jornada : str
     +objetivo : str
     +tempo_disponivel : int
+    +senha_hash : str | None
     +curso : Curso | None
     --
     +definir_curso(curso) : bool
@@ -37,7 +38,6 @@ package "models" #F4F8FF {
     +remover_disciplina(codigo) : bool
     +buscar_disciplina(codigo) : Disciplina | None
     +calcular_carga_horaria_total() : int
-    +calcular_progresso() : float
     +exibir_ficha() : None
     +to_dict() : dict
   }
@@ -47,11 +47,18 @@ package "models" #F4F8FF {
     +nome : str
     +codigo : str
     +carga_horaria : int
+    --
+    +exibir_ficha() : None
+    +to_dict() : dict
+  }
+
+  class ProgressoDisciplina {
+    +usuario_id : int
+    +disciplina_id : int
     +concluida : bool
     --
     +concluir() : bool
     +reabrir() : bool
-    +exibir_ficha() : None
     +to_dict() : dict
   }
 }
@@ -81,6 +88,13 @@ package "repository" #F4FFF6 {
     +excluir(id_curso) : bool
   }
 
+  class ProgressoDisciplinaRepository {
+    +buscar(usuario_id, disciplina_id) : ProgressoDisciplina | None
+    +listar_status_do_curso(usuario_id, curso_id) : dict
+    +salvar(progresso) : bool
+    +calcular_progresso(usuario_id, curso_id) : float
+  }
+
   class DisciplinaRepository {
     +{static} linha_para_objeto(linha) : Disciplina
     --
@@ -105,11 +119,14 @@ database "SQLite" as db
 ' Relacionamentos entre models
 Usuario "0..*" --> "0..1" Curso : curso
 Curso "1" o-- "0..*" Disciplina : disciplinas
+Usuario "1" -- "0..*" ProgressoDisciplina : progresso individual
+Disciplina "1" -- "0..*" ProgressoDisciplina : status por usuário
 
 ' Cada repository persiste o seu model
 UsuarioRepository ..> Usuario
 CursoRepository ..> Curso
 DisciplinaRepository ..> Disciplina
+ProgressoDisciplinaRepository ..> ProgressoDisciplina
 
 ' Colaboração entre repositories
 UsuarioRepository ..> CursoRepository : carrega o curso
@@ -119,6 +136,7 @@ CursoRepository ..> DisciplinaRepository : linha_para_objeto()
 UsuarioRepository ..> conexao
 CursoRepository ..> conexao
 DisciplinaRepository ..> conexao
+ProgressoDisciplinaRepository ..> conexao
 conexao ..> db
 
 legend right
@@ -128,6 +146,8 @@ legend right
   ..> dependência (usa, cria ou persiste)
   +público  -privado  {static} método estático
   Properties = getter/setter com validação (ValueError)
+  Senha do usuário é armazenada como hash, nunca em texto puro.
+  Progresso de conclusão é individual: Usuario + Disciplina.
 endlegend
 
 @enduml

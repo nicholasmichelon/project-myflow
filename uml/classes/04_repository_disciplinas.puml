@@ -29,7 +29,6 @@ package "models" {
     +nome : str
     +codigo : str
     +carga_horaria : int
-    +concluida : bool
   }
 }
 
@@ -47,10 +46,12 @@ conexao ..> db
 
 note right of DisciplinaRepository
   <b>Observações</b>
-  - codigo é único no banco
+  - codigo é único dentro de cada curso
   - inserir() grava o id gerado no próprio objeto
   - inserir() e atualizar() convertem
     sqlite3.IntegrityError em ValueError
+  - atualizar() não controla progresso de conclusão;
+    esse estado fica em ProgressoDisciplinaRepository
   - atualizar() NÃO altera curso_id:
     o vínculo é gerenciado pelo CursoRepository
   - linha_para_objeto() é estática porque o

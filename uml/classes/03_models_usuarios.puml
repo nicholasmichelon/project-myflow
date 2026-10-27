@@ -15,6 +15,7 @@ package "models" {
     -_jornada : str
     -_objetivo : str
     -_tempo_disponivel : int
+    -_senha_hash : str | None
     -_curso : Curso | None
     .. properties (getter / setter com validação) ..
     +id : int | None
@@ -23,9 +24,10 @@ package "models" {
     +jornada : str
     +objetivo : str
     +tempo_disponivel : int
+    +senha_hash : str | None
     +curso : Curso | None
     -- construtor --
-    +__init__(nome, email, jornada, objetivo, tempo_disponivel, id=None)
+    +__init__(nome, email, jornada, objetivo, tempo_disponivel, id=None, senha_hash=None)
     -- comportamentos --
     +definir_curso(curso : Curso) : bool
     +remover_curso() : bool
@@ -51,6 +53,7 @@ note right of Usuario
   - curso NÃO é parâmetro do __init__:
     todo usuário nasce com curso = None
   - cada usuário tem no máximo um curso
+  - a senha é armazenada como hash, não em texto puro
   - email deve conter "@"
   - tempo_disponivel em minutos, inteiro > 0
   - definir_curso(): False se já tiver curso

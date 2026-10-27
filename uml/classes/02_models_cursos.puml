@@ -25,7 +25,6 @@ package "models" {
     +remover_disciplina(codigo : str) : bool
     +buscar_disciplina(codigo : str) : Disciplina | None
     +calcular_carga_horaria_total() : int
-    +calcular_progresso() : float
     +exibir_ficha() : None
     +__repr__() : str
     +to_dict() : dict
@@ -34,7 +33,6 @@ package "models" {
   class Disciplina {
     +codigo : str
     +carga_horaria : int
-    +concluida : bool
     +to_dict() : dict
   }
 }
@@ -49,8 +47,9 @@ note right of Curso
     use adicionar_disciplina / remover_disciplina
   - adicionar_disciplina(): False se o código já existir
   - remover_disciplina(): False se o código não existir
-  - calcular_progresso(): % de disciplinas concluídas
-    (0.0 se o curso não tiver disciplinas)
+  - o progresso individual não pertence ao Curso;
+    é calculado pelo ProgressoDisciplinaRepository
+    considerando o usuário e cada disciplina.
 end note
 
 note bottom of Disciplina

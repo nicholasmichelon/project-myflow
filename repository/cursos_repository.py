@@ -33,18 +33,18 @@ class CursoRepository:
         if disciplina.id is None:
             cursor = conexao.execute(
                 'INSERT INTO disciplinas '
-                '(nome, codigo, carga_horaria, concluida, curso_id) '
-                'VALUES (?, ?, ?, ?, ?)',
+                '(nome, codigo, carga_horaria, curso_id) '
+                'VALUES (?, ?, ?, ?)',
                 (disciplina.nome, disciplina.codigo, disciplina.carga_horaria,
-                 int(disciplina.concluida), id_curso),
+                 id_curso),
             )
             disciplina.id = cursor.lastrowid
         else:
             conexao.execute(
                 'UPDATE disciplinas SET nome = ?, codigo = ?, carga_horaria = ?, '
-                'concluida = ?, curso_id = ? WHERE id = ?',
+                'curso_id = ? WHERE id = ?',
                 (disciplina.nome, disciplina.codigo, disciplina.carga_horaria,
-                 int(disciplina.concluida), id_curso, disciplina.id),
+                 id_curso, disciplina.id),
             )
 
     def _linha_para_objeto(self, conexao, linha):

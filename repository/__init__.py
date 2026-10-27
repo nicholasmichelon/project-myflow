@@ -1,1 +1,1 @@
-"""Pacote do MyFlow."""
+"""Repositórios de persistência do MyFlow."""

@@ -1,1 +1,1 @@
-"""Pacote do MyFlow."""
+"""Classes de domínio do MyFlow."""

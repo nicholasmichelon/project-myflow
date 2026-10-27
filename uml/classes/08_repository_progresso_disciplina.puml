@@ -1,0 +1,34 @@
+@startuml 08_repository_progresso_disciplina
+title MyFlow - Repository do progresso individual
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam classFontStyle bold
+hide circle
+
+class ProgressoDisciplina {
+  +usuario_id : int
+  +disciplina_id : int
+  +concluida : bool
+  +concluir() : bool
+  +reabrir() : bool
+}
+
+class ProgressoDisciplinaRepository {
+  +buscar(usuario_id, disciplina_id) : ProgressoDisciplina | None
+  +listar_status_do_curso(usuario_id, curso_id) : dict
+  +salvar(progresso) : bool
+  +calcular_progresso(usuario_id, curso_id) : float
+}
+
+database "SQLite" as db
+
+ProgressoDisciplinaRepository ..> ProgressoDisciplina : persiste
+ProgressoDisciplinaRepository ..> db : SELECT / UPSERT
+
+note right of ProgressoDisciplinaRepository
+  Cada registro é único por usuário e disciplina.
+  O repositório verifica se a disciplina pertence ao
+  curso associado ao usuário antes de salvar o progresso.
+end note
+@enduml

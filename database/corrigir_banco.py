@@ -1,10 +1,7 @@
-"""Migra a tabela usuarios para permitir que vários usuários compartilhem um curso.
+"""Migra usuarios.curso_id para permitir que vários usuários compartilhem cursos.
 
-Execute uma vez, com o Flask parado:
-    python database/corrigir_banco.py
-
-A migração preserva os IDs e os registros existentes. Se o banco já estiver
-corrigido, o script informa isso e não faz alterações.
+Preserva os IDs, os dados dos usuários e senha_hash, se já existir.
+Execute apenas se o banco ainda tiver UNIQUE isolado em usuarios.curso_id.
 """
 
 import sqlite3
@@ -14,23 +11,17 @@ CAMINHO_BANCO = Path(__file__).resolve().parent / "banco.db"
 
 
 def coluna_curso_tem_unique(conexao):
-    """Verifica se existe um índice UNIQUE composto apenas por curso_id."""
-    indices = conexao.execute("PRAGMA index_list('usuarios')").fetchall()
-
-    for indice in indices:
+    for indice in conexao.execute("PRAGMA index_list('usuarios')").fetchall():
         nome_indice = indice[1]
         unico = bool(indice[2])
-
         if not unico:
             continue
 
-        # O nome do índice é retornado pelo próprio SQLite.
         colunas = conexao.execute(
             f'PRAGMA index_info("{nome_indice.replace(chr(34), chr(34) * 2)}")'
         ).fetchall()
 
-        nomes_colunas = [coluna[2] for coluna in colunas]
-        if nomes_colunas == ["curso_id"]:
+        if [coluna[2] for coluna in colunas] == ["curso_id"]:
             return True
 
     return False
@@ -39,8 +30,7 @@ def coluna_curso_tem_unique(conexao):
 def migrar():
     if not CAMINHO_BANCO.exists():
         raise FileNotFoundError(
-            f"Banco não encontrado: {CAMINHO_BANCO}. "
-            "Inicialize-o primeiro executando database/conexao.py."
+            f"Banco não encontrado: {CAMINHO_BANCO}. Inicialize-o antes."
         )
 
     conexao = sqlite3.connect(CAMINHO_BANCO)
@@ -61,12 +51,15 @@ def migrar():
 
         if not coluna_curso_tem_unique(conexao):
             print(
-                "Nenhuma restrição UNIQUE isolada em usuarios.curso_id "
-                "foi encontrada. O banco já permite compartilhar cursos."
+                "Banco já permite compartilhar cursos; nenhuma alteração necessária."
             )
             return
 
-        # A instrução deve ocorrer antes de iniciar uma transação.
+        colunas_atuais = {
+            linha[1] for linha in conexao.execute("PRAGMA table_info(usuarios)")
+        }
+        expressao_senha = "senha_hash" if "senha_hash" in colunas_atuais else "NULL"
+
         conexao.execute("PRAGMA foreign_keys = OFF")
         conexao.execute("BEGIN")
 
@@ -80,20 +73,21 @@ def migrar():
                 tempo_disponivel INTEGER NOT NULL
                     CHECK (tempo_disponivel > 0),
                 curso_id INTEGER,
+                senha_hash TEXT,
                 FOREIGN KEY (curso_id)
                     REFERENCES cursos(id)
                     ON DELETE SET NULL
             )
         """)
 
-        conexao.execute("""
+        conexao.execute(f"""
             INSERT INTO usuarios_nova (
                 id, nome, email, jornada, objetivo,
-                tempo_disponivel, curso_id
+                tempo_disponivel, curso_id, senha_hash
             )
             SELECT
                 id, nome, email, jornada, objetivo,
-                tempo_disponivel, curso_id
+                tempo_disponivel, curso_id, {expressao_senha}
             FROM usuarios
         """)
 
@@ -109,15 +103,11 @@ def migrar():
             )
 
         conexao.commit()
-        print(
-            "Migração concluída. Vários usuários agora podem compartilhar "
-            "o mesmo curso."
-        )
+        print("Migração concluída. Vários usuários podem compartilhar um curso.")
 
     except Exception:
         conexao.rollback()
         raise
-
     finally:
         conexao.execute("PRAGMA foreign_keys = ON")
         conexao.close()

@@ -73,7 +73,8 @@ rotaDisc --> pessoa : redirect para /disciplinas\nmensagem de sucesso
 
 note over pessoa, db
   O curso e suas disciplinas são compartilhados entre usuários
-  associados ao mesmo curso. O progresso individual ainda não é separado.
+  associados ao mesmo curso. A conclusão das disciplinas é registrada
+  separadamente por usuário em progresso_disciplinas.
 end note
 
 @enduml
