@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFlow | Disciplinas</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='styles.css') }}"
+    >
+</head>
+
+<body>
+    <main class="container">
+        <header class="cabecalho">
+            <div class="logo">MyFlow</div>
+            <h1>Organize suas disciplinas</h1>
+            <p>Olá, {{ usuario.nome }}! Gerencie as disciplinas do seu curso.</p>
+        </header>
+
+        <section class="formulario-container">
+            <div class="resumo-curso">
+                <span>Seu curso</span>
+                <h2>{{ curso.nome }}</h2>
+                <p>Nível: {{ curso.nivel }}</p>
+                <p>
+                    Carga horária total:
+                    {{ curso.calcular_carga_horaria_total() }}h
+                </p>
+                <p>
+                    Progresso do curso:
+                    {{ "%.1f"|format(curso.calcular_progresso()) }}%
+                </p>
+            </div>
+
+            {% if sucesso %}
+                <div class="mensagem sucesso" role="status">
+                    <strong>Sucesso!</strong>
+                    <p>{{ sucesso }}</p>
+                </div>
+            {% endif %}
+
+            {% if erro %}
+                <div class="mensagem erro" role="alert">
+                    <strong>Não foi possível cadastrar a disciplina.</strong>
+                    <p>{{ erro }}</p>
+                </div>
+            {% endif %}
+
+            <div class="titulo-formulario">
+                <h2>Adicionar disciplina</h2>
+                <p>Informe os dados da disciplina abaixo.</p>
+            </div>
+
+            <form action="{{ url_for('pagina_disciplinas') }}" method="POST">
+                <div class="campo">
+                    <label for="nome">Nome da disciplina</label>
+                    <input
+                        type="text"
+                        id="nome"
+                        name="nome"
+                        value="{{ form.get('nome', '') }}"
+                        placeholder="Ex.: Programação Orientada a Objetos"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="codigo">Código da disciplina</label>
+                    <input
+                        type="text"
+                        id="codigo"
+                        name="codigo"
+                        value="{{ form.get('codigo', '') }}"
+                        placeholder="Ex.: POO-2026"
+                        required
+                    >
+                    <small>O código não pode se repetir dentro do mesmo curso.</small>
+                </div>
+
+                <div class="campo">
+                    <label for="carga_horaria">Carga horária</label>
+                    <div class="campo-tempo">
+                        <input
+                            type="number"
+                            id="carga_horaria"
+                            name="carga_horaria"
+                            value="{{ form.get('carga_horaria', '') }}"
+                            min="1"
+                            step="1"
+                            placeholder="Ex.: 60"
+                            required
+                        >
+                        <span>horas</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="botao-cadastro">
+                    Adicionar disciplina
+                    <span aria-hidden="true">&rarr;</span>
+                </button>
+            </form>
+
+            <div class="secao-disciplinas">
+                <div class="titulo-formulario">
+                    <h2>Disciplinas cadastradas</h2>
+                    <p>Total: {{ disciplinas|length }} disciplina(s)</p>
+                </div>
+
+                {% if disciplinas %}
+                    <div class="lista-disciplinas">
+                        {% for disciplina in disciplinas %}
+                            <article class="disciplina-item">
+                                <div class="disciplina-cabecalho">
+                                    <h3>{{ disciplina.nome }}</h3>
+                                    {% if disciplina.concluida %}
+                                        <span class="etiqueta concluida">Concluída</span>
+                                    {% else %}
+                                        <span class="etiqueta andamento">Em andamento</span>
+                                    {% endif %}
+                                </div>
+                                <div class="disciplina-meta">
+                                    <span>Código: {{ disciplina.codigo }}</span>
+                                    <span>Carga horária: {{ disciplina.carga_horaria }}h</span>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="lista-vazia">
+                        Você ainda não cadastrou disciplinas para este curso.
+                    </p>
+                {% endif %}
+            </div>
+
+            <a href="{{ url_for('pagina_curso') }}" class="botao-secundario">
+                Voltar para o curso
+            </a>
+        </section>
+
+        <footer class="rodape">
+            <p>MyFlow — um passo de cada vez.</p>
+        </footer>
+    </main>
+</body>
+</html>

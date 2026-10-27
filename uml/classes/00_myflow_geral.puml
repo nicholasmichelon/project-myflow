@@ -88,7 +88,7 @@ package "repository" #F4FFF6 {
     +listar_todos() : list[Disciplina]
     +listar_por_curso(id_curso) : list[Disciplina]
     +buscar_por_id(id_disciplina) : Disciplina | None
-    +buscar_por_codigo(codigo) : Disciplina | None
+    +buscar_por_codigo(codigo, curso_id=None) : Disciplina | None
     +atualizar(disciplina) : bool
     +excluir(id_disciplina) : bool
   }

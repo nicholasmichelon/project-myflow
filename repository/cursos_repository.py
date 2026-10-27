@@ -103,14 +103,24 @@ class CursoRepository:
             conexao.close()
 
     def buscar_por_nome(self, nome):
-        # Parâmetro: nome (str)
-        # Retorno: objeto Curso ou None se não existir.
+        # A comparação é feita com casefold() do Python para reconhecer
+        # letras acentuadas em diferentes capitalizações (SQLite NOCASE
+        # trata apenas caracteres ASCII por padrão).
+        if not isinstance(nome, str):
+            return None
+
+        nome_normalizado = nome.strip().casefold()
         conexao = obter_conexao()
         try:
-            linha = conexao.execute(
-                'SELECT * FROM cursos WHERE nome = ?', (nome,)
-            ).fetchone()
-            return self._linha_para_objeto(conexao, linha) if linha else None
+            linhas = conexao.execute(
+                'SELECT * FROM cursos ORDER BY id'
+            ).fetchall()
+
+            for linha in linhas:
+                if linha['nome'].casefold() == nome_normalizado:
+                    return self._linha_para_objeto(conexao, linha)
+
+            return None
         finally:
             conexao.close()
 

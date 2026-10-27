@@ -98,6 +98,7 @@
                             type="text"
                             id="nome"
                             name="nome"
+                            value="{{ form.get('nome', '') }}"
                             placeholder="Ex.: Negócios Digitais"
                             required
                         >
@@ -115,31 +116,31 @@
                                 Selecione o nível
                             </option>
 
-                            <option value="Ensino Fundamental">
+                            <option value="Ensino Fundamental" {% if form.get("nivel") == "Ensino Fundamental" %}selected{% endif %}>
                                 Ensino Fundamental
                             </option>
 
-                            <option value="Ensino Médio">
+                            <option value="Ensino Médio" {% if form.get("nivel") == "Ensino Médio" %}selected{% endif %}>
                                 Ensino Médio
                             </option>
 
-                            <option value="Graduação">
+                            <option value="Graduação" {% if form.get("nivel") == "Graduação" %}selected{% endif %}>
                                 Graduação
                             </option>
 
-                            <option value="Pós-graduação">
+                            <option value="Pós-graduação" {% if form.get("nivel") == "Pós-graduação" %}selected{% endif %}>
                                 Pós-graduação
                             </option>
 
-                            <option value="Curso livre">
+                            <option value="Curso livre" {% if form.get("nivel") == "Curso livre" %}selected{% endif %}>
                                 Curso livre
                             </option>
 
-                            <option value="Certificação">
+                            <option value="Certificação" {% if form.get("nivel") == "Certificação" %}selected{% endif %}>
                                 Certificação
                             </option>
 
-                            <option value="Outro">
+                            <option value="Outro" {% if form.get("nivel") == "Outro" %}selected{% endif %}>
                                 Outro
                             </option>
                         </select>

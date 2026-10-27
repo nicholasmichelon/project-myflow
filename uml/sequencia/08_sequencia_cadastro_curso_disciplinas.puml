@@ -1,0 +1,79 @@
+@startuml 08_sequencia_cadastro_curso_disciplinas
+title MyFlow - Sequência: cadastro de curso e disciplinas compartilhados
+
+skinparam shadowing false
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Pessoa usuária" as pessoa
+participant "Flask\npagina_curso()" as rotaCurso
+participant "Flask\npagina_disciplinas()" as rotaDisc
+participant ":UsuarioRepository" as repoUsuario
+participant ":CursoRepository" as repoCurso
+participant ":Usuario" as usuario
+participant ":Curso" as curso
+participant ":Disciplina" as disciplina
+participant "database.conexao" as cx
+database "SQLite" as db
+
+== Associar o usuário a um curso existente ou novo ==
+
+pessoa -> rotaCurso : POST /curso\n(nome, nível)
+rotaCurso -> repoUsuario : buscar_por_id(usuario_id)
+repoUsuario -> db : SELECT usuário e curso_id
+db --> repoUsuario : dados do usuário
+repoUsuario --> rotaCurso : Usuario
+
+rotaCurso -> repoCurso : buscar_por_nome(nome)
+repoCurso -> db : SELECT curso por nome
+db --> repoCurso : Curso existente ou None
+repoCurso --> rotaCurso : curso ou None
+
+alt curso não existe
+  rotaCurso -> curso : constrói Curso(nome, nivel)
+  rotaCurso -> repoCurso : inserir(curso)
+  repoCurso -> db : INSERT INTO cursos
+  db --> repoCurso : id_curso
+  repoCurso --> rotaCurso : id_curso
+else curso já existe
+  note over rotaCurso, repoCurso
+    Reutiliza o registro existente se o nível for compatível.
+  end note
+end
+
+rotaCurso -> usuario : definir_curso(curso)
+usuario --> rotaCurso : True
+rotaCurso -> repoUsuario : atualizar(usuario)
+repoUsuario -> db : UPDATE usuarios SET curso_id = ?
+db --> repoUsuario : atualização confirmada
+rotaCurso --> pessoa : redirect para /curso
+
+== Adicionar disciplina ao curso associado ==
+
+pessoa -> rotaDisc : POST /disciplinas\n(nome, código, carga horária)
+rotaDisc -> repoUsuario : buscar_por_id(usuario_id)
+repoUsuario -> db : SELECT usuário
+db --> repoUsuario : usuário e curso_id
+repoUsuario --> rotaDisc : Usuario com Curso
+rotaDisc -> repoCurso : buscar_por_id(curso_id)
+repoCurso -> db : SELECT curso e disciplinas
+db --> repoCurso : dados do curso e disciplinas
+repoCurso --> rotaDisc : Curso
+
+rotaDisc -> disciplina : constrói Disciplina(nome, codigo, carga_horaria)
+rotaDisc -> curso : adicionar_disciplina(disciplina)
+curso --> rotaDisc : True se código não duplicado
+rotaDisc -> repoCurso : atualizar(curso)
+repoCurso -> db : UPDATE cursos
+repoCurso -> db : INSERT INTO disciplinas\n(..., curso_id)
+db --> repoCurso : disciplina salva
+repoCurso --> rotaDisc : True
+rotaDisc --> pessoa : redirect para /disciplinas\nmensagem de sucesso
+
+note over pessoa, db
+  O curso e suas disciplinas são compartilhados entre usuários
+  associados ao mesmo curso. O progresso individual ainda não é separado.
+end note
+
+@enduml

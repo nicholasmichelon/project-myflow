@@ -17,7 +17,7 @@ package "repository" {
     +listar_todos() : list[Disciplina]
     +listar_por_curso(id_curso : int) : list[Disciplina]
     +buscar_por_id(id_disciplina : int) : Disciplina | None
-    +buscar_por_codigo(codigo : str) : Disciplina | None
+    +buscar_por_codigo(codigo : str, curso_id : int | None) : Disciplina | None
     +atualizar(disciplina : Disciplina) : bool
     +excluir(id_disciplina : int) : bool
   }

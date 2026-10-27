@@ -111,8 +111,14 @@ class Curso:
         return True
 
     def buscar_disciplina(self, codigo):
+        # O banco usa COLLATE NOCASE; a busca em memória segue a mesma regra.
+        if not isinstance(codigo, str):
+            return None
+
+        codigo_normalizado = codigo.strip().casefold()
+
         for disciplina in self._disciplinas:
-            if disciplina.codigo == codigo:
+            if disciplina.codigo.casefold() == codigo_normalizado:
                 return disciplina
         return None
 

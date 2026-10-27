@@ -68,6 +68,7 @@
                         type="text"
                         id="nome"
                         name="nome"
+                        value="{{ form.get('nome', '') }}"
                         placeholder="Digite seu nome"
                         autocomplete="name"
                         required
@@ -81,6 +82,7 @@
                         type="email"
                         id="email"
                         name="email"
+                        value="{{ form.get('email', '') }}"
                         placeholder="voce@exemplo.com"
                         autocomplete="email"
                         required
@@ -101,31 +103,31 @@
                             Selecione sua jornada
                         </option>
 
-                        <option value="Ensino Fundamental">
+                        <option value="Ensino Fundamental" {% if form.get("jornada") == "Ensino Fundamental" %}selected{% endif %}>
                             Ensino Fundamental
                         </option>
 
-                        <option value="Ensino Médio">
+                        <option value="Ensino Médio" {% if form.get("jornada") == "Ensino Médio" %}selected{% endif %}>
                             Ensino Médio
                         </option>
 
-                        <option value="Graduação">
+                        <option value="Graduação" {% if form.get("jornada") == "Graduação" %}selected{% endif %}>
                             Graduação
                         </option>
 
-                        <option value="Pós-graduação">
+                        <option value="Pós-graduação" {% if form.get("jornada") == "Pós-graduação" %}selected{% endif %}>
                             Pós-graduação
                         </option>
 
-                        <option value="Curso livre">
+                        <option value="Curso livre" {% if form.get("jornada") == "Curso livre" %}selected{% endif %}>
                             Curso livre
                         </option>
 
-                        <option value="Estudo independente">
+                        <option value="Estudo independente" {% if form.get("jornada") == "Estudo independente" %}selected{% endif %}>
                             Estudo independente
                         </option>
 
-                        <option value="Outro">
+                        <option value="Outro" {% if form.get("jornada") == "Outro" %}selected{% endif %}>
                             Outro
                         </option>
                     </select>
@@ -142,7 +144,7 @@
                         rows="4"
                         placeholder="Ex.: organizar meus estudos e acompanhar meu progresso."
                         required
-                    ></textarea>
+                    >{{ form.get('objetivo', '') }}</textarea>
                 </div>
 
                 <div class="campo">
@@ -155,6 +157,7 @@
                             type="number"
                             id="tempo_disponivel"
                             name="tempo_disponivel"
+                            value="{{ form.get('tempo_disponivel', '') }}"
                             min="1"
                             step="1"
                             placeholder="Ex.: 60"

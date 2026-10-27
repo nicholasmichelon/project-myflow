@@ -129,6 +129,13 @@ class Usuario:
     def curso(self, valor):
         if valor is not None and not isinstance(valor, Curso):
             raise ValueError('curso deve ser None ou um objeto Curso')
+
+        curso_atual = getattr(self, "_curso", None)
+        if curso_atual is not None and valor is not None and valor is not curso_atual:
+            raise ValueError(
+                'O usuário já possui um curso. Use remover_curso() antes de trocar.'
+            )
+
         self._curso = valor
 
     # ---------------------------------------------------------
@@ -168,8 +175,8 @@ class Usuario:
         nome_curso = self.curso.nome if self.curso else None
         return (
             f'Usuario(id={self.id!r}, nome={self.nome!r}, email={self.email!r}, '
-            f'jornada={self.jornada!r}, tempo_disponivel={self.tempo_disponivel!r}, '
-            f'curso={nome_curso!r})'
+            f'jornada={self.jornada!r}, objetivo={self.objetivo!r}, '
+            f'tempo_disponivel={self.tempo_disponivel!r}, curso={nome_curso!r})'
         )
 
     # ---------------------------------------------------------

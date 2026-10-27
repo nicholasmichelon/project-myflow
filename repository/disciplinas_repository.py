@@ -5,7 +5,8 @@ Classe responsável por toda a persistência (acesso ao banco SQLite) dos
 objetos Disciplina.
 
 Observações:
-    - o código da disciplina é único (sem diferenciar maiúsculas de minúsculas)
+    - o código da disciplina é único dentro de cada curso (sem diferenciar
+      maiúsculas de minúsculas); por isso, buscar_por_codigo pode receber curso_id
     - inserir e atualizar lançam ValueError se o banco recusar os dados
       (por exemplo, código repetido)
     - inserir também grava o id gerado no próprio objeto Disciplina
@@ -83,14 +84,21 @@ class DisciplinaRepository:
             conexao.close()
         return self.linha_para_objeto(linha) if linha else None
 
-    def buscar_por_codigo(self, codigo):
-        # Parâmetro: codigo (str)
-        # Retorno: objeto Disciplina ou None se não existir.
+    def buscar_por_codigo(self, codigo, curso_id=None):
+        # O código é único por curso. Informe curso_id quando o contexto
+        # do curso for conhecido; sem ele, retorna a primeira correspondência.
         conexao = obter_conexao()
         try:
-            linha = conexao.execute(
-                'SELECT * FROM disciplinas WHERE codigo = ?', (codigo,)
-            ).fetchone()
+            if curso_id is None:
+                linha = conexao.execute(
+                    'SELECT * FROM disciplinas WHERE codigo = ? ORDER BY id LIMIT 1',
+                    (codigo,),
+                ).fetchone()
+            else:
+                linha = conexao.execute(
+                    'SELECT * FROM disciplinas WHERE codigo = ? AND curso_id = ?',
+                    (codigo, curso_id),
+                ).fetchone()
         finally:
             conexao.close()
         return self.linha_para_objeto(linha) if linha else None

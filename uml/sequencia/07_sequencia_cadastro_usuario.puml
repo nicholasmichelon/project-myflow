@@ -1,8 +1,5 @@
 @startuml 07_sequencia_cadastro_usuario
-' MyFlow - Diagrama de sequência
-' Cenário: cadastrar um curso com disciplinas, vincular a um usuário,
-' gravar tudo no banco e depois consultar o usuário pelo id.
-title MyFlow - Sequência: cadastro e consulta de usuário com curso
+title MyFlow - Sequência: cadastro do usuário
 
 skinparam shadowing false
 skinparam sequenceMessageAlign left
@@ -10,106 +7,39 @@ skinparam responseMessageBelowArrow true
 autonumber
 
 actor "Pessoa usuária" as pessoa
-participant "Aplicação\n(rota / main)" as app
-participant ":Disciplina" as disc
-participant ":Curso" as curso
-participant ":Usuario" as usu
-participant ":CursoRepository" as crepo
-participant ":UsuarioRepository" as urepo
-participant "DisciplinaRepository" as drepo
+participant "Flask\npagina_cadastro()" as app
+participant ":Usuario" as usuario
+participant ":UsuarioRepository" as repo
 participant "database.conexao" as cx
 database "SQLite" as db
 
-== 1. Montar os objetos em memória (models) ==
+pessoa -> app : GET /
+app --> pessoa : renderiza cadastro.html
 
-pessoa -> app : preenche cadastro\n(jornada, objetivo, tempo, curso, disciplinas)
+pessoa -> app : POST / (dados do formulário)
+app -> usuario : constrói Usuario(nome, email,\njornada, objetivo, tempo_disponivel)
+note right of usuario
+  Properties validam os valores.
+  curso começa como None.
+end note
 
-loop para cada disciplina informada
-  app -> disc ** : Disciplina(nome, codigo, carga_horaria)
-  note right of disc : setters validam os dados\nconcluida = False, id = None
+app -> repo : buscar_por_email(email)
+repo -> cx : obter_conexao()
+cx --> repo : conexão
+repo -> db : SELECT usuário pelo e-mail
+db --> repo : usuário existente ou None
+repo --> app : usuário existente ou None
+
+alt e-mail já cadastrado
+  app --> pessoa : formulário com mensagem de erro
+else e-mail disponível
+  app -> repo : inserir(usuario)
+  repo -> cx : obter_conexao()
+  repo -> db : INSERT INTO usuarios
+  db --> repo : id gerado
+  repo -> usuario : id = id gerado
+  repo --> app : id_usuario
+  app --> pessoa : redirect para /curso
 end
-
-app -> curso ** : Curso(nome, nivel)
-note right of curso : disciplinas = []
-
-loop para cada disciplina
-  app -> curso : adicionar_disciplina(disciplina)
-  curso -> curso : buscar_disciplina(codigo)
-  alt código ainda não existe
-    curso --> app : True
-  else código repetido
-    curso --> app : False (nada é alterado)
-  end
-end
-
-app -> usu ** : Usuario(nome, email, jornada,\nobjetivo, tempo_disponivel)
-note right of usu : curso = None, id = None
-app -> usu : definir_curso(curso)
-usu --> app : True
-
-== 2. Persistir o curso (com disciplinas, uma transação) ==
-
-app -> crepo : inserir(curso)
-crepo -> cx : obter_conexao()
-cx --> crepo : conexao
-crepo -> db : INSERT INTO cursos (nome, nivel)
-db --> crepo : lastrowid (id_curso)
-loop para cada disciplina de curso.disciplinas
-  crepo -> crepo : _salvar_disciplina(conexao, disciplina, id_curso)
-  crepo -> db : INSERT INTO disciplinas (..., curso_id)
-  db --> crepo : lastrowid
-  crepo -> disc : id = lastrowid
-end
-crepo -> db : commit()
-crepo -> curso : id = id_curso
-crepo --> app : id_curso
-note over crepo, db : conexao.close() no finally
-
-== 3. Persistir o usuário ==
-
-app -> urepo : inserir(usuario)
-urepo -> urepo : _id_do_curso(usuario)
-urepo -> curso : id ?
-curso --> urepo : id_curso
-note right of urepo : se curso.id fosse None:\nValueError (salvar o curso antes)
-urepo -> cx : obter_conexao()
-cx --> urepo : conexao
-urepo -> db : INSERT INTO usuarios (..., curso_id)
-alt e-mail ainda não cadastrado
-  db --> urepo : lastrowid
-  urepo -> db : commit()
-  urepo -> usu : id = lastrowid
-  urepo --> app : id_usuario
-  app --> pessoa : cadastro concluído
-else e-mail repetido
-  db --> urepo : sqlite3.IntegrityError
-  urepo --> app : ValueError("Não foi possível salvar o usuário")
-  app --> pessoa : mensagem de erro
-end
-
-== 4. Consultar o usuário (reconstrói os objetos a partir do banco) ==
-
-app -> urepo : buscar_por_id(id_usuario)
-urepo -> cx : obter_conexao()
-urepo -> db : SELECT * FROM usuarios WHERE id = ?
-db --> urepo : linha
-urepo -> urepo : _linha_para_objeto(linha)
-create participant ":Usuario\n(novo objeto)" as usu2
-urepo -> usu2 : Usuario(...)
-urepo -> crepo : buscar_por_id(linha["curso_id"])
-crepo -> db : SELECT * FROM cursos WHERE id = ?
-db --> crepo : linha do curso
-crepo -> crepo : _linha_para_objeto(conexao, linha)
-crepo -> db : SELECT * FROM disciplinas WHERE curso_id = ?
-db --> crepo : linhas das disciplinas
-loop para cada linha
-  crepo -> drepo : linha_para_objeto(linha) [estático]
-  drepo --> crepo : Disciplina
-end
-crepo --> urepo : Curso (com disciplinas)
-urepo -> usu2 : curso = Curso
-urepo --> app : Usuario
-app -> usu2 : exibir_ficha() / to_dict()
-app --> pessoa : mostra perfil e progresso
 
 @enduml
