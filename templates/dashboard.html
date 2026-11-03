@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFlow | Painel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<main class="container container-amplo">
+    <header class="cabecalho">
+        <div class="logo">MyFlow</div>
+        <h1>Olá, {{ usuario.nome }}!</h1>
+        <p>Veja seu progresso e escolha a próxima ação para seus estudos.</p>
+    </header>
+
+    {% include "_nav_conta.html" %}
+
+    <section class="painel-intro">
+        <div>
+            <span class="subtitulo-cartao">Seu curso</span>
+            <h2>{{ curso.nome }}</h2>
+            <p>{{ curso.nivel }} · {{ curso.disciplinas|length }} disciplina(s)</p>
+        </div>
+        <a class="botao-secundario link-inline" href="{{ url_for('pagina_disciplinas') }}">Ver disciplinas</a>
+    </section>
+
+    <section class="metricas-grid" aria-label="Resumo dos estudos">
+        <article class="metrica-card">
+            <span>Progresso do curso</span>
+            <strong>{{ "%.0f"|format(progresso_percentual) }}%</strong>
+            <div class="progresso-trilho"><div class="progresso-preenchimento" style="width: {{ progresso_percentual }}%;"></div></div>
+        </article>
+        <article class="metrica-card">
+            <span>Tarefas pendentes</span>
+            <strong>{{ resumo_tarefas.pendentes }}</strong>
+            <small>Atividades para fazer</small>
+        </article>
+        <article class="metrica-card">
+            <span>Tarefas concluídas</span>
+            <strong>{{ resumo_tarefas.concluidas }}</strong>
+            <small>De {{ resumo_tarefas.total }} no total</small>
+        </article>
+        <article class="metrica-card {% if tarefas_atrasadas %}metrica-alerta{% endif %}">
+            <span>Tarefas atrasadas</span>
+            <strong>{{ tarefas_atrasadas|length }}</strong>
+            <small>Prazo anterior a hoje</small>
+        </article>
+    </section>
+
+    <section class="sugestao-card">
+        <div class="sugestao-icone" aria-hidden="true">✦</div>
+        <div class="sugestao-conteudo">
+            <span class="subtitulo-cartao">Sua próxima ação</span>
+            {% if sugestao %}
+                <h2>{{ sugestao.titulo }}</h2>
+                <p>
+                    {% if sugestao.disciplina_nome %}{{ sugestao.disciplina_nome }} · {% endif %}
+                    {{ sugestao.duracao_estimada }} min · prioridade {{ sugestao.prioridade }}
+                    {% if sugestao.esta_atrasada(hoje) %} · prazo atrasado{% elif sugestao.prazo %} · prazo {{ sugestao.prazo }}{% endif %}
+                </p>
+                {% if sugestao.descricao %}<p>{{ sugestao.descricao }}</p>{% endif %}
+                <a class="botao-cadastro link-botao" href="{{ url_for('pagina_tarefas') }}">Ver tarefa</a>
+            {% elif tarefas_pendentes %}
+                <h2>Seu tempo de hoje é curto para as tarefas pendentes</h2>
+                <p>Você informou {{ usuario.tempo_disponivel }} minutos disponíveis. Ajuste o tempo no perfil ou revise a duração estimada das tarefas.</p>
+            {% else %}
+                <h2>Você está em dia!</h2>
+                <p>Não há tarefas pendentes. Cadastre uma nova atividade para continuar seu planejamento.</p>
+                <a class="botao-cadastro link-botao" href="{{ url_for('pagina_tarefas') }}">Criar tarefa</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="dashboard-colunas">
+        <div class="painel-lista">
+            <div class="secao-titulo-linha">
+                <div><h2>Próximos prazos</h2><p>Atividades futuras</p></div>
+                <a href="{{ url_for('pagina_agenda') }}">Ver agenda</a>
+            </div>
+            {% if tarefas_proximas %}
+                <div class="tarefas-mini-lista">
+                    {% for tarefa in tarefas_proximas %}
+                        <article class="tarefa-mini">
+                            <div class="tarefa-mini-principal">
+                                <strong>{{ tarefa.titulo }}</strong>
+                                <span>{% if tarefa.disciplina_nome %}{{ tarefa.disciplina_nome }} · {% endif %}{{ tarefa.duracao_estimada }} min</span>
+                            </div>
+                            <time datetime="{{ tarefa.prazo }}">{{ tarefa.prazo }}</time>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="lista-vazia">Você não tem prazos futuros cadastrados.</p>
+            {% endif %}
+        </div>
+
+        <div class="painel-lista">
+            <div class="secao-titulo-linha">
+                <div><h2>Comece por aqui</h2><p>Atalhos do MyFlow</p></div>
+            </div>
+            <a class="atalho-card" href="{{ url_for('pagina_tarefas') }}"><span class="atalho-simbolo">✓</span><span><strong>Gerenciar tarefas</strong><small>Crie, conclua ou remova atividades.</small></span><span>→</span></a>
+            <a class="atalho-card" href="{{ url_for('pagina_disciplinas') }}"><span class="atalho-simbolo">▤</span><span><strong>Ver disciplinas</strong><small>Acompanhe seu progresso individual.</small></span><span>→</span></a>
+            <a class="atalho-card" href="{{ url_for('pagina_perfil') }}"><span class="atalho-simbolo">◉</span><span><strong>Atualizar meu tempo</strong><small>Personalize as sugestões diárias.</small></span><span>→</span></a>
+        </div>
+    </section>
+
+    <footer class="rodape"><p>MyFlow — um passo de cada vez.</p></footer>
+</main>
+</body>
+</html>

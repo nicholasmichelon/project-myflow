@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MyFlow | Cadastro</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='styles.css') }}"
+    >
+</head>
+
+<body>
+    <main class="container">
+
+        <!-- Cabeçalho -->
+        <header class="cabecalho">
+            <div class="logo">MyFlow</div>
+
+            <h1>Vamos organizar sua jornada?</h1>
+
+            <p>
+                Conte um pouco sobre você para começar
+                a organizar seus estudos.
+            </p>
+        </header>
+
+        <!-- Cartão de cadastro -->
+        <section class="formulario-container">
+
+            <div class="titulo-formulario">
+                <h2>Crie seu perfil</h2>
+
+                <p>
+                    Preencha os campos abaixo para começar.
+                </p>
+            </div>
+
+            <!-- Mensagem de sucesso -->
+            {% if sucesso %}
+                <div class="mensagem sucesso" role="status">
+                    <strong>Cadastro realizado!</strong>
+                    <p>{{ sucesso }}</p>
+                </div>
+            {% endif %}
+
+            <!-- Mensagem de erro -->
+            {% if erro %}
+                <div class="mensagem erro" role="alert">
+                    <strong>Não foi possível concluir o cadastro.</strong>
+                    <p>{{ erro }}</p>
+                </div>
+            {% endif %}
+
+            <!-- Formulário -->
+            <form
+                action="{{ url_for('pagina_cadastro') }}"
+                method="POST"
+            >
+
+                <div class="campo">
+                    <label for="nome">Nome completo</label>
+
+                    <input
+                        type="text"
+                        id="nome"
+                        name="nome"
+                        value="{{ form.get('nome', '') }}"
+                        placeholder="Digite seu nome"
+                        autocomplete="name"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="email">E-mail</label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value="{{ form.get('email', '') }}"
+                        placeholder="voce@exemplo.com"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="senha">Senha</label>
+                    <input
+                        type="password"
+                        id="senha"
+                        name="senha"
+                        minlength="8"
+                        autocomplete="new-password"
+                        placeholder="Crie uma senha com pelo menos 8 caracteres"
+                        required
+                    >
+                    <small>Use pelo menos 8 caracteres.</small>
+                </div>
+
+                <div class="campo">
+                    <label for="confirmar_senha">Confirmar senha</label>
+                    <input
+                        type="password"
+                        id="confirmar_senha"
+                        name="confirmar_senha"
+                        minlength="8"
+                        autocomplete="new-password"
+                        placeholder="Digite a senha novamente"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="jornada">
+                        Em qual etapa de estudos você está?
+                    </label>
+
+                    <select
+                        id="jornada"
+                        name="jornada"
+                        required
+                    >
+                        <option value="">
+                            Selecione sua jornada
+                        </option>
+
+                        <option value="Ensino Fundamental" {% if form.get("jornada") == "Ensino Fundamental" %}selected{% endif %}>
+                            Ensino Fundamental
+                        </option>
+
+                        <option value="Ensino Médio" {% if form.get("jornada") == "Ensino Médio" %}selected{% endif %}>
+                            Ensino Médio
+                        </option>
+
+                        <option value="Graduação" {% if form.get("jornada") == "Graduação" %}selected{% endif %}>
+                            Graduação
+                        </option>
+
+                        <option value="Pós-graduação" {% if form.get("jornada") == "Pós-graduação" %}selected{% endif %}>
+                            Pós-graduação
+                        </option>
+
+                        <option value="Curso livre" {% if form.get("jornada") == "Curso livre" %}selected{% endif %}>
+                            Curso livre
+                        </option>
+
+                        <option value="Estudo independente" {% if form.get("jornada") == "Estudo independente" %}selected{% endif %}>
+                            Estudo independente
+                        </option>
+
+                        <option value="Outro" {% if form.get("jornada") == "Outro" %}selected{% endif %}>
+                            Outro
+                        </option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label for="objetivo">
+                        Qual é seu principal objetivo de aprendizagem?
+                    </label>
+
+                    <textarea
+                        id="objetivo"
+                        name="objetivo"
+                        rows="4"
+                        placeholder="Ex.: organizar meus estudos e acompanhar meu progresso."
+                        required
+                    >{{ form.get('objetivo', '') }}</textarea>
+                </div>
+
+                <div class="campo">
+                    <label for="tempo_disponivel">
+                        Quanto tempo você tem para estudar por dia?
+                    </label>
+
+                    <div class="campo-tempo">
+                        <input
+                            type="number"
+                            id="tempo_disponivel"
+                            name="tempo_disponivel"
+                            value="{{ form.get('tempo_disponivel', '') }}"
+                            min="1"
+                            step="1"
+                            placeholder="Ex.: 60"
+                            required
+                        >
+
+                        <span>minutos</span>
+                    </div>
+
+                    <small>
+                        Informe um número inteiro maior que zero.
+                    </small>
+                </div>
+
+                <button
+                    type="submit"
+                    class="botao-cadastro"
+                >
+                    Continuar
+                    <span aria-hidden="true">&rarr;</span>
+                </button>
+
+            </form>
+
+            <p class="nota-privacidade">
+                Seus dados serão utilizados para organizar
+                sua experiência de aprendizagem no MyFlow.
+            </p>
+
+            <p class="texto-alternativo">
+                Já tem uma conta?
+                <a href="{{ url_for('pagina_login') }}">Entrar</a>
+            </p>
+
+        </section>
+
+        <!-- Rodapé -->
+        <footer class="rodape">
+            <p>MyFlow — um passo de cada vez.</p>
+        </footer>
+
+    </main>
+</body>
+
+</html>

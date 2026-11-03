@@ -33,6 +33,15 @@ def inicializar_banco():
         }
         if "senha_hash" not in colunas_usuarios:
             conexao.execute("ALTER TABLE usuarios ADD COLUMN senha_hash TEXT")
+            colunas_usuarios.add("senha_hash")
+
+        # Adiciona o perfil de proprietário a bancos criados em versões anteriores.
+        if "is_owner" not in colunas_usuarios:
+            conexao.execute(
+                "ALTER TABLE usuarios ADD COLUMN is_owner INTEGER NOT NULL DEFAULT 0 "
+                "CHECK (is_owner IN (0, 1))"
+            )
+            colunas_usuarios.add("is_owner")
 
         # Migração única do status antigo que ficava na própria Disciplina.
         # Preserva a conclusão antiga para os usuários já vinculados ao curso.

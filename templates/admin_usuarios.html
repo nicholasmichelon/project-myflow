@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFlow | Administração de contas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<main class="container container-amplo">
+    <header class="cabecalho">
+        <div class="logo">MyFlow</div>
+        <h1>Administração de contas</h1>
+        <p>Área exclusiva dos proprietários do MyFlow.</p>
+    </header>
+    {% include "_nav_conta.html" %}
+    <section class="formulario-container">
+        <div class="mensagem aviso"><strong>Privacidade das senhas</strong><p>As senhas existentes nunca são exibidas. O sistema armazena hashes. Você pode definir uma senha inicial/temporária para uma conta comum ou excluir a conta, removendo o e-mail e o hash associado.</p></div>
+        {% if sucesso %}<div class="mensagem sucesso" role="status"><p>{{ sucesso }}</p></div>{% endif %}
+        {% if erro %}<div class="mensagem erro" role="alert"><p>{{ erro }}</p></div>{% endif %}
+        <div class="titulo-formulario"><h2>Contas cadastradas</h2><p>Total: {{ contas|length }} conta(s).</p></div>
+        {% if contas %}
+        <div class="tabela-responsiva">
+            <table class="tabela-contas">
+                <thead><tr><th>Usuário</th><th>E-mail</th><th>Curso</th><th>Papel</th><th>Senha</th><th>Ações</th></tr></thead>
+                <tbody>
+                {% for conta in contas %}
+                    <tr>
+                        <td data-label="Usuário">{{ conta.nome }}</td>
+                        <td data-label="E-mail">{{ conta.email }}</td>
+                        <td data-label="Curso">{{ conta.curso_nome or 'Não associado' }}</td>
+                        <td data-label="Papel">{{ 'Proprietário' if conta.is_owner else 'Usuário' }}</td>
+                        <td data-label="Senha">
+                            {% if conta.is_owner %}
+                                <span class="texto-pequeno">Gerenciada pelo próprio proprietário</span>
+                            {% elif conta.senha_configurada %}
+                                <span class="etiqueta concluida">Configurada</span>
+                            {% else %}
+                                <span class="etiqueta andamento">Sem senha</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Ações" class="acoes-conta">
+                            {% if conta.id == usuario.id %}
+                                <span class="texto-pequeno">Sua conta ativa</span>
+                            {% elif conta.is_owner %}
+                                <form method="POST" action="{{ url_for('admin_alterar_papel', id_usuario=conta.id) }}" class="form-acao-conta" onsubmit="return confirm('Remover o papel de proprietário desta conta?');">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="acao" value="rebaixar">
+                                    <button type="submit" class="botao-secundario botao-pequeno">Remover papel de proprietário</button>
+                                </form>
+                            {% else %}
+                                <details class="detalhe-admin">
+                                    <summary>Definir senha</summary>
+                                    <form method="POST" action="{{ url_for('admin_definir_senha', id_usuario=conta.id) }}" class="form-acao-conta">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                        <div class="campo"><label for="senha-{{ conta.id }}">Senha temporária</label><input type="password" id="senha-{{ conta.id }}" name="nova_senha" minlength="8" autocomplete="new-password" required></div>
+                                        <div class="campo"><label for="confirma-{{ conta.id }}">Confirmar senha</label><input type="password" id="confirma-{{ conta.id }}" name="confirmar_senha" minlength="8" autocomplete="new-password" required></div>
+                                        <button type="submit" class="botao-progresso">Definir senha</button>
+                                    </form>
+                                </details>
+                                <form method="POST" action="{{ url_for('admin_alterar_papel', id_usuario=conta.id) }}" class="form-acao-conta">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="acao" value="promover">
+                                    <button type="submit" class="botao-secundario botao-pequeno">Tornar proprietário</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin_excluir_usuario', id_usuario=conta.id) }}" class="form-acao-conta" onsubmit="return confirm('Excluir esta conta? O e-mail e o hash da senha serão removidos.');">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="botao-perigo">Excluir conta</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p class="lista-vazia">Ainda não há contas cadastradas.</p>
+        {% endif %}
+    </section>
+    <footer class="rodape"><p>MyFlow — um passo de cada vez.</p></footer>
+</main>
+</body>
+</html>

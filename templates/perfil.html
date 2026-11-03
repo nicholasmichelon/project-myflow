@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFlow | Meu perfil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<main class="container">
+    <header class="cabecalho">
+        <div class="logo">MyFlow</div>
+        <h1>Meu perfil</h1>
+        <p>Atualize seus dados e suas credenciais de acesso.</p>
+    </header>
+
+    {% include "_nav_conta.html" %}
+
+    <section class="formulario-container">
+        <div class="titulo-formulario">
+            <h2>Dados da conta</h2>
+            <p>Para trocar e-mail ou senha, informe sua senha atual.</p>
+        </div>
+
+        {% if sucesso %}
+            <div class="mensagem sucesso" role="status"><strong>Alterações salvas</strong><p>{{ sucesso }}</p></div>
+        {% endif %}
+        {% if erro %}
+            <div class="mensagem erro" role="alert"><strong>Não foi possível atualizar</strong><p>{{ erro }}</p></div>
+        {% endif %}
+
+        <form action="{{ url_for('pagina_perfil') }}" method="POST">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="campo"><label for="nome">Nome</label><input id="nome" name="nome" value="{{ form.get('nome', usuario.nome) }}" required></div>
+            <div class="campo"><label for="email">E-mail de login</label><input type="email" id="email" name="email" value="{{ form.get('email', usuario.email) }}" autocomplete="email" required></div>
+            <div class="campo"><label for="jornada">Jornada de aprendizagem</label><input id="jornada" name="jornada" value="{{ form.get('jornada', usuario.jornada) }}" required></div>
+            <div class="campo"><label for="objetivo">Objetivo de aprendizagem</label><textarea id="objetivo" name="objetivo" rows="3" required>{{ form.get('objetivo', usuario.objetivo) }}</textarea></div>
+            <div class="campo"><label for="tempo_disponivel">Tempo disponível por dia (minutos)</label><input type="number" id="tempo_disponivel" name="tempo_disponivel" min="1" step="1" value="{{ form.get('tempo_disponivel', usuario.tempo_disponivel) }}" required></div>
+
+            <hr class="separador">
+            <div class="titulo-formulario">
+                <h2>Alterar senha</h2>
+                <p>Deixe os campos de nova senha vazios se não quiser alterá-la.</p>
+            </div>
+            <div class="campo"><label for="senha_atual">Senha atual</label><input type="password" id="senha_atual" name="senha_atual" autocomplete="current-password"></div>
+            <div class="campo"><label for="nova_senha">Nova senha</label><input type="password" id="nova_senha" name="nova_senha" minlength="8" autocomplete="new-password"><small>A nova senha deve ter pelo menos 8 caracteres.</small></div>
+            <div class="campo"><label for="confirmar_senha">Confirmar nova senha</label><input type="password" id="confirmar_senha" name="confirmar_senha" minlength="8" autocomplete="new-password"></div>
+            <button type="submit" class="botao-cadastro">Salvar alterações <span aria-hidden="true">→</span></button>
+        </form>
+    </section>
+    <footer class="rodape"><p>MyFlow — um passo de cada vez.</p></footer>
+</main>
+</body>
+</html>

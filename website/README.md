@@ -1,43 +1,35 @@
-# Website
+# MyFlow Documentation (Docusaurus)
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+Portal em português para documentar o protótipo acadêmico MyFlow. O conteúdo cobre produto, instalação, configuração, fluxos da aplicação, modelos, repositórios, SQLite, rotas Flask, segurança, solução de problemas e UML.
 
-## Installation
+## Requisitos
+
+- Node.js 20 ou superior
+- npm
+
+## Desenvolvimento local
 
 ```bash
 npm install
-```
-
-**Note**: feel free to use the package manager of your choice.
-
-## Local Development
-
-```bash
 npm run start
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+O Docusaurus abre `http://localhost:3000` e atualiza a página ao salvar arquivos em `docs/`, `src/` ou na configuração.
 
 ## Build
 
 ```bash
 npm run build
+npm run serve
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+O resultado estático fica em `build/`. Configure `url` e `baseUrl` em `docusaurus.config.js` quando souber o endereço real de publicação; `https://example.com` é apenas um valor provisório de configuração.
 
-## Deployment
+## Organização
 
-Using SSH:
-
-```bash
-USE_SSH=true npm run deploy
-```
-
-Not using SSH:
-
-```bash
-GIT_USER=<Your GitHub username> npm run deploy
-```
-
-If you are using GitHub Pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+- `docs/`: documentação funcional e técnica em Markdown/MDX.
+- `src/pages/index.js`: página inicial customizada.
+- `src/css/custom.css`: tokens visuais e personalização do tema.
+- `src/pages/index.module.css`: layout da página inicial, com breakpoints responsivos.
+- `static/img/`: marca e ilustração vetorial para metadados.
+- `static/uml/`: fontes PlantUML disponíveis para download.

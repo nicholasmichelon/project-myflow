@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFlow | Agenda de estudos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<main class="container container-amplo">
+    <header class="cabecalho">
+        <div class="logo">MyFlow</div>
+        <h1>Agenda de estudos</h1>
+        <p>Organize suas atividades por prazo e acompanhe o que já concluiu.</p>
+    </header>
+    {% include "_nav_conta.html" %}
+
+    <section class="painel-lista">
+        {% if sucesso %}<div class="mensagem sucesso" role="status"><p>{{ sucesso }}</p></div>{% endif %}
+        <div class="secao-titulo-linha"><div><h2>Seus prazos</h2><p>Hoje: {{ hoje }}</p></div><a href="{{ url_for('pagina_tarefas') }}">Gerenciar tarefas</a></div>
+        {% if tarefas %}
+            <div class="agenda-lista">
+            {% for tarefa in tarefas %}
+                <article class="agenda-item {% if tarefa.concluida %}agenda-item-concluido{% elif tarefa.esta_atrasada(hoje) %}agenda-item-atrasado{% endif %}">
+                    <div class="agenda-data">{% if tarefa.prazo %}<strong>{{ tarefa.prazo }}</strong>{% else %}<strong>Sem prazo</strong>{% endif %}<span>{{ 'Concluída' if tarefa.concluida else ('Atrasada' if tarefa.esta_atrasada(hoje) else 'Pendente') }}</span></div>
+                    <div class="agenda-detalhe"><h3>{{ tarefa.titulo }}</h3><p>{% if tarefa.disciplina_nome %}{{ tarefa.disciplina_nome }} · {% endif %}{{ tarefa.duracao_estimada }} min · Prioridade {{ 'média' if tarefa.prioridade == 'media' else tarefa.prioridade }}</p>{% if tarefa.descricao %}<p>{{ tarefa.descricao }}</p>{% endif %}</div>
+                    {% if not tarefa.concluida %}
+                    <form action="{{ url_for('acao_tarefa', tarefa_id=tarefa.id) }}" method="POST"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="origem" value="agenda"><input type="hidden" name="acao" value="concluir"><button class="botao-progresso" type="submit">Concluir</button></form>
+                    {% endif %}
+                </article>
+            {% endfor %}
+            </div>
+        {% else %}<p class="lista-vazia">Sua agenda está vazia. Cadastre tarefas para planejar seus próximos estudos.</p>{% endif %}
+    </section>
+    <footer class="rodape"><p>MyFlow — um passo de cada vez.</p></footer>
+</main>
+</body>
+</html>

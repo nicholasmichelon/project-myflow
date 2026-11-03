@@ -27,9 +27,10 @@ from models.cursos import Curso
 
 
 class Usuario:
-    def __init__(self, nome, email, jornada, objetivo, tempo_disponivel, id=None, senha_hash=None):
+    def __init__(self, nome, email, jornada, objetivo, tempo_disponivel, id=None, senha_hash=None, is_owner=False):
         self.id = id
         self.senha_hash = senha_hash
+        self.is_owner = is_owner
         self.nome = nome
         self.email = email
         self.jornada = jornada
@@ -66,6 +67,19 @@ class Usuario:
         ):
             raise ValueError("senha_hash deve ser None ou uma string não vazia")
         self._senha_hash = valor
+
+    # ---------------------------------------------------------
+    # Property: is_owner (acesso administrativo)
+    # ---------------------------------------------------------
+    @property
+    def is_owner(self):
+        return self._is_owner
+
+    @is_owner.setter
+    def is_owner(self, valor):
+        if not isinstance(valor, bool):
+            raise ValueError("is_owner deve ser True ou False")
+        self._is_owner = valor
 
     # ---------------------------------------------------------
     # Property: nome

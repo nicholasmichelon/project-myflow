@@ -1,0 +1,44 @@
+@startuml 09_sequencia_login
+title MyFlow - Sequência: login do usuário
+
+skinparam shadowing false
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Pessoa usuária" as pessoa
+participant "Flask\npagina_login()" as app
+participant ":UsuarioRepository" as repo
+participant ":Usuario" as usuario
+participant "Werkzeug Security" as seguranca
+participant "database.conexao" as cx
+database "SQLite" as db
+
+pessoa -> app : GET /login
+app --> pessoa : renderiza login.html
+
+pessoa -> app : POST /login (e-mail, senha)
+app -> repo : buscar_por_email(email)
+repo -> cx : obter_conexao()
+cx --> repo : conexão
+repo -> db : SELECT usuário por e-mail
+db --> repo : dados ou None
+repo --> app : Usuario ou None
+
+alt usuário não encontrado
+  app --> pessoa : mensagem genérica de credenciais inválidas
+else conta sem senha configurada
+  app --> pessoa : instrução para definir senha localmente
+else usuário encontrado
+  app -> seguranca : check_password_hash(senha_hash, senha)
+  alt senha incorreta
+    seguranca --> app : False
+    app --> pessoa : mensagem genérica de credenciais inválidas
+  else senha correta
+    seguranca --> app : True
+    app -> app : cria sessão com usuario_id
+    app --> pessoa : redireciona para o curso ou disciplinas
+  end
+end
+
+@enduml

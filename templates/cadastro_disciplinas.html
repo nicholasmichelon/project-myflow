@@ -18,12 +18,7 @@
             <h1>Organize suas disciplinas</h1>
             <p>Olá, {{ usuario.nome }}! Gerencie as disciplinas do seu curso.</p>
         </header>
-
-        <div class="barra-acoes">
-            <form action="{{ url_for('sair') }}" method="POST" class="form-sair">
-                <button type="submit" class="botao-sair">Sair da conta</button>
-            </form>
-        </div>
+        {% include "_nav_conta.html" %}
 
         <section class="formulario-container">
             <div class="resumo-curso">
@@ -75,6 +70,7 @@
             </div>
 
             <form action="{{ url_for('pagina_disciplinas') }}" method="POST">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                 <div class="campo">
                     <label for="nome">Nome da disciplina</label>
                     <input
@@ -153,6 +149,7 @@
                                     method="POST"
                                     class="form-progresso"
                                 >
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                     <input
                                         type="hidden"
                                         name="disciplina_id"

@@ -1,6 +1,9 @@
 """Aplicação web Flask do MyFlow."""
 
 import os
+import secrets
+from datetime import date
+
 
 from flask import (
     Flask,
@@ -9,6 +12,7 @@ from flask import (
     redirect,
     url_for,
     session,
+    abort,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -16,19 +20,75 @@ from models.usuarios import Usuario
 from models.cursos import Curso
 from models.disciplinas import Disciplina
 from models.progresso_disciplina import ProgressoDisciplina
+from models.tarefa import Tarefa
+from models.sugestor_de_tarefas import SugestorDeTarefas
 
 from repository.usuarios_repository import UsuarioRepository
 from repository.cursos_repository import CursoRepository
 from repository.progresso_disciplina_repository import ProgressoDisciplinaRepository
+from repository.tarefas_repository import TarefaRepository
 
 from database.conexao import inicializar_banco
 
 
 app = Flask(__name__)
-app.secret_key = os.environ.get(
-    "MYFLOW_SECRET_KEY",
-    "chave-local-myflow-apenas-desenvolvimento",
-)
+# Sem variável definida, gera uma chave aleatória para o uso local.
+# Isso invalida as sessões quando o app é reiniciado, mas evita usar uma chave pública.
+app.secret_key = os.environ.get("MYFLOW_SECRET_KEY") or secrets.token_urlsafe(32)
+
+# Token de uso único para ativar o primeiro proprietário pela interface.
+# Em ambiente local, é exibido no terminal quando ainda não há proprietários.
+TOKEN_PROPRIETARIO = os.environ.get("MYFLOW_OWNER_SETUP_TOKEN") or secrets.token_urlsafe(24)
+app.config["TOKEN_PROPRIETARIO"] = TOKEN_PROPRIETARIO
+
+
+@app.context_processor
+def disponibilizar_csrf_e_configuracao():
+    """Disponibiliza token CSRF e informa se a configuração inicial está aberta."""
+    if "_csrf_token" not in session:
+        session["_csrf_token"] = secrets.token_urlsafe(32)
+
+    try:
+        pode_configurar_proprietario = UsuarioRepository().contar_proprietarios() == 0
+    except Exception:
+        pode_configurar_proprietario = False
+
+    return {
+        "csrf_token": lambda: session.get("_csrf_token", ""),
+        "pode_configurar_proprietario": pode_configurar_proprietario,
+    }
+
+
+@app.before_request
+def proteger_formularios_post():
+    """Validação CSRF simples para todos os formulários POST."""
+    if request.method == "POST":
+        token_sessao = session.get("_csrf_token", "")
+        token_formulario = request.form.get("_csrf_token", "")
+        if (
+            not token_sessao
+            or not token_formulario
+            or not secrets.compare_digest(token_sessao, token_formulario)
+        ):
+            abort(400, description="Token de segurança inválido. Atualize a página e tente novamente.")
+
+
+def usuario_da_sessao():
+    """Recupera o usuário autenticado; não confia em papel guardado no cookie."""
+    id_usuario = session.get("usuario_id")
+    if id_usuario is None:
+        return None
+    return UsuarioRepository().buscar_por_id(id_usuario)
+
+
+def exigir_proprietario():
+    usuario = usuario_da_sessao()
+    if usuario is None:
+        session.clear()
+        return None
+    if not usuario.is_owner:
+        abort(403, description="Esta área é exclusiva dos proprietários do MyFlow.")
+    return usuario
 
 
 def renderizar_cadastro_usuario(erro=None, status=200, form=None):
@@ -41,10 +101,10 @@ def renderizar_cadastro_usuario(erro=None, status=200, form=None):
 
 
 def destino_usuario(usuario):
-    """Encaminha usuário para a próxima etapa ainda não concluída."""
+    """Encaminha contas existentes ao painel; contas novas completam o curso."""
     if usuario.curso is None:
         return url_for("pagina_curso")
-    return url_for("pagina_disciplinas")
+    return url_for("pagina_dashboard")
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -156,8 +216,8 @@ def pagina_login():
             "login.html",
             erro=(
                 "Esta conta foi criada antes do login por senha. "
-                "Defina uma senha pelo script "
-                "scripts/definir_senha_usuario.py e tente novamente."
+                "Peça a um proprietário do MyFlow para definir uma senha inicial "
+                "pela área administrativa."
             ),
             email=email,
         ), 400
@@ -424,6 +484,506 @@ def pagina_disciplinas():
     )
 
 
+@app.route("/dashboard", methods=["GET"])
+def pagina_dashboard():
+    """Painel principal com resumo de estudos, tarefas e próxima recomendação."""
+    usuario = usuario_da_sessao()
+    if usuario is None:
+        session.clear()
+        return redirect(url_for("pagina_login"))
+    if usuario.curso is None:
+        return redirect(url_for("pagina_curso"))
+
+    curso = CursoRepository().buscar_por_id(usuario.curso.id)
+    if curso is None:
+        return redirect(url_for("pagina_curso"))
+
+    repositorio_tarefas = TarefaRepository()
+    tarefas = repositorio_tarefas.listar_do_usuario(usuario.id)
+    pendentes = [t for t in tarefas if not t.concluida]
+    concluidas = [t for t in tarefas if t.concluida]
+    hoje = date.today().isoformat()
+    atrasadas = [t for t in pendentes if t.esta_atrasada(hoje)]
+    proximas = [t for t in pendentes if t.prazo and t.prazo >= hoje][:5]
+
+    sugestor = SugestorDeTarefas(usuario.tempo_disponivel)
+    sugestao = sugestor.sugerir_proxima_acao(tarefas, hoje=date.today())
+    progresso = ProgressoDisciplinaRepository().calcular_progresso(
+        usuario.id, curso.id
+    )
+    resumo_tarefas = repositorio_tarefas.resumo_do_usuario(usuario.id)
+
+    return render_template(
+        "dashboard.html",
+        usuario=usuario,
+        curso=curso,
+        tarefas=tarefas,
+        tarefas_pendentes=pendentes,
+        tarefas_concluidas=concluidas,
+        tarefas_atrasadas=atrasadas,
+        tarefas_proximas=proximas,
+        sugestao=sugestao,
+        progresso_percentual=progresso,
+        resumo_tarefas=resumo_tarefas,
+        hoje=hoje,
+    )
+
+
+@app.route("/tarefas", methods=["GET", "POST"])
+def pagina_tarefas():
+    """Cria e lista tarefas pertencentes exclusivamente ao usuário conectado."""
+    usuario = usuario_da_sessao()
+    if usuario is None:
+        session.clear()
+        return redirect(url_for("pagina_login"))
+    if usuario.curso is None:
+        return redirect(url_for("pagina_curso"))
+
+    curso = CursoRepository().buscar_por_id(usuario.curso.id)
+    if curso is None:
+        return redirect(url_for("pagina_curso"))
+
+    repositorio = TarefaRepository()
+    form = {
+        "titulo": request.form.get("titulo", "").strip() if request.method == "POST" else "",
+        "descricao": request.form.get("descricao", "").strip() if request.method == "POST" else "",
+        "prazo": request.form.get("prazo", "").strip() if request.method == "POST" else "",
+        "prioridade": request.form.get("prioridade", "media").strip() if request.method == "POST" else "media",
+        "duracao_estimada": request.form.get("duracao_estimada", "30").strip() if request.method == "POST" else "30",
+        "disciplina_id": request.form.get("disciplina_id", "").strip() if request.method == "POST" else "",
+    }
+
+    if request.method == "POST":
+        try:
+            try:
+                duracao = int(form["duracao_estimada"])
+            except (TypeError, ValueError):
+                raise ValueError("A duração estimada deve ser um número inteiro de minutos.")
+
+            disciplina_id = None
+            if form["disciplina_id"]:
+                try:
+                    disciplina_id = int(form["disciplina_id"])
+                except (TypeError, ValueError):
+                    raise ValueError("Selecione uma disciplina válida.")
+                if not any(d.id == disciplina_id for d in curso.disciplinas):
+                    raise ValueError("A disciplina selecionada não pertence ao seu curso.")
+
+            tarefa = Tarefa(
+                usuario_id=usuario.id,
+                disciplina_id=disciplina_id,
+                titulo=form["titulo"],
+                descricao=form["descricao"],
+                prazo=form["prazo"] or None,
+                prioridade=form["prioridade"],
+                duracao_estimada=duracao,
+            )
+            repositorio.criar(tarefa)
+            session["mensagem_tarefas"] = "Tarefa criada com sucesso!"
+            return redirect(url_for("pagina_tarefas"))
+        except ValueError as erro:
+            return render_template(
+                "tarefas.html",
+                usuario=usuario,
+                curso=curso,
+                tarefas=repositorio.listar_do_usuario(usuario.id),
+                disciplinas=curso.disciplinas,
+                sucesso=None,
+                erro=str(erro),
+                form=form,
+                hoje=date.today().isoformat(),
+            ), 400
+
+    sucesso = session.pop("mensagem_tarefas", None)
+    return render_template(
+        "tarefas.html",
+        usuario=usuario,
+        curso=curso,
+        tarefas=repositorio.listar_do_usuario(usuario.id),
+        disciplinas=curso.disciplinas,
+        sucesso=sucesso,
+        erro=None,
+        form=form,
+        hoje=date.today().isoformat(),
+    )
+
+
+@app.route("/tarefas/<int:tarefa_id>/editar", methods=["GET", "POST"])
+def editar_tarefa(tarefa_id):
+    usuario = usuario_da_sessao()
+    if usuario is None:
+        session.clear()
+        return redirect(url_for("pagina_login"))
+    if usuario.curso is None:
+        return redirect(url_for("pagina_curso"))
+
+    curso = CursoRepository().buscar_por_id(usuario.curso.id)
+    if curso is None:
+        return redirect(url_for("pagina_curso"))
+
+    repositorio = TarefaRepository()
+    tarefa_atual = repositorio.buscar_por_id(tarefa_id, usuario.id)
+    if tarefa_atual is None:
+        session["mensagem_tarefas"] = "Tarefa não encontrada."
+        return redirect(url_for("pagina_tarefas"))
+
+    if request.method == "GET":
+        form = {
+            "titulo": tarefa_atual.titulo,
+            "descricao": tarefa_atual.descricao,
+            "prazo": tarefa_atual.prazo or "",
+            "prioridade": tarefa_atual.prioridade,
+            "duracao_estimada": str(tarefa_atual.duracao_estimada),
+            "disciplina_id": str(tarefa_atual.disciplina_id or ""),
+        }
+        return render_template(
+            "editar_tarefa.html", usuario=usuario, curso=curso,
+            disciplinas=curso.disciplinas, tarefa=tarefa_atual,
+            form=form, erro=None
+        )
+
+    form = {
+        "titulo": request.form.get("titulo", "").strip(),
+        "descricao": request.form.get("descricao", "").strip(),
+        "prazo": request.form.get("prazo", "").strip(),
+        "prioridade": request.form.get("prioridade", "media").strip(),
+        "duracao_estimada": request.form.get("duracao_estimada", "").strip(),
+        "disciplina_id": request.form.get("disciplina_id", "").strip(),
+    }
+    try:
+        try:
+            duracao = int(form["duracao_estimada"])
+        except (TypeError, ValueError):
+            raise ValueError("A duração estimada deve ser um número inteiro de minutos.")
+
+        disciplina_id = None
+        if form["disciplina_id"]:
+            try:
+                disciplina_id = int(form["disciplina_id"])
+            except (TypeError, ValueError):
+                raise ValueError("Selecione uma disciplina válida.")
+            if not any(d.id == disciplina_id for d in curso.disciplinas):
+                raise ValueError("A disciplina selecionada não pertence ao seu curso.")
+
+        tarefa_atual.titulo = form["titulo"]
+        tarefa_atual.descricao = form["descricao"]
+        tarefa_atual.prazo = form["prazo"] or None
+        tarefa_atual.prioridade = form["prioridade"]
+        tarefa_atual.duracao_estimada = duracao
+        tarefa_atual.disciplina_id = disciplina_id
+
+        repositorio.atualizar(tarefa_atual)
+        session["mensagem_tarefas"] = "Tarefa atualizada com sucesso."
+        return redirect(url_for("pagina_tarefas"))
+    except ValueError as erro:
+        return render_template(
+            "editar_tarefa.html", usuario=usuario, curso=curso,
+            disciplinas=curso.disciplinas, tarefa=tarefa_atual,
+            form=form, erro=str(erro)
+        ), 400
+
+
+@app.route("/tarefas/<int:tarefa_id>/acao", methods=["POST"])
+def acao_tarefa(tarefa_id):
+    usuario = usuario_da_sessao()
+    if usuario is None:
+        session.clear()
+        return redirect(url_for("pagina_login"))
+
+    repositorio = TarefaRepository()
+    tarefa = repositorio.buscar_por_id(tarefa_id, usuario.id)
+    if tarefa is None:
+        session["mensagem_tarefas"] = "Tarefa não encontrada."
+        return redirect(url_for("pagina_tarefas"))
+
+    acao = request.form.get("acao", "")
+    if acao == "concluir":
+        tarefa.concluir()
+        repositorio.atualizar(tarefa)
+        session["mensagem_tarefas"] = "Tarefa marcada como concluída."
+    elif acao == "reabrir":
+        tarefa.reabrir()
+        repositorio.atualizar(tarefa)
+        session["mensagem_tarefas"] = "Tarefa reaberta."
+    elif acao == "excluir":
+        repositorio.excluir(tarefa.id, usuario.id)
+        session["mensagem_tarefas"] = "Tarefa excluída."
+    else:
+        session["mensagem_tarefas"] = "Ação de tarefa inválida."
+
+    destino = request.form.get("origem", "tarefas")
+    if destino == "agenda":
+        return redirect(url_for("pagina_agenda"))
+    return redirect(url_for("pagina_tarefas"))
+
+
+@app.route("/agenda", methods=["GET"])
+def pagina_agenda():
+    """Agenda baseada nos prazos das tarefas do usuário conectado."""
+    usuario = usuario_da_sessao()
+    if usuario is None:
+        session.clear()
+        return redirect(url_for("pagina_login"))
+    if usuario.curso is None:
+        return redirect(url_for("pagina_curso"))
+
+    tarefas = TarefaRepository().listar_do_usuario(usuario.id)
+    hoje = date.today().isoformat()
+    return render_template(
+        "agenda.html",
+        usuario=usuario,
+        tarefas=tarefas,
+        hoje=hoje,
+        sucesso=session.pop("mensagem_tarefas", None),
+    )
+
+
+@app.route("/perfil", methods=["GET", "POST"])
+def pagina_perfil():
+    """Permite ao usuário editar seus dados e as próprias credenciais."""
+    usuario = usuario_da_sessao()
+    if usuario is None:
+        session.clear()
+        return redirect(url_for("pagina_login"))
+
+    repositorio = UsuarioRepository()
+
+    if request.method == "GET":
+        sucesso = session.pop("mensagem_perfil", None)
+        return render_template(
+            "perfil.html", usuario=usuario, erro=None, sucesso=sucesso,
+            form={
+                "nome": usuario.nome,
+                "email": usuario.email,
+                "jornada": usuario.jornada,
+                "objetivo": usuario.objetivo,
+                "tempo_disponivel": str(usuario.tempo_disponivel),
+            },
+        )
+
+    form = {
+        "nome": request.form.get("nome", "").strip(),
+        "email": request.form.get("email", "").strip(),
+        "jornada": request.form.get("jornada", "").strip(),
+        "objetivo": request.form.get("objetivo", "").strip(),
+        "tempo_disponivel": request.form.get("tempo_disponivel", "").strip(),
+    }
+    senha_atual = request.form.get("senha_atual", "")
+    nova_senha = request.form.get("nova_senha", "")
+    confirmar_senha = request.form.get("confirmar_senha", "")
+
+    email_alterado = form["email"].casefold() != usuario.email.casefold()
+    senha_solicitada = bool(nova_senha or confirmar_senha)
+
+    try:
+        if email_alterado or senha_solicitada:
+            if not usuario.senha_hash or not check_password_hash(usuario.senha_hash, senha_atual):
+                raise ValueError("Informe sua senha atual corretamente para alterar o e-mail ou a senha.")
+
+        existente = repositorio.buscar_por_email(form["email"])
+        if existente is not None and existente.id != usuario.id:
+            raise ValueError("Este e-mail já está cadastrado em outra conta.")
+
+        try:
+            tempo = int(form["tempo_disponivel"])
+        except (TypeError, ValueError):
+            raise ValueError("O tempo disponível deve ser um número inteiro de minutos.")
+
+        if senha_solicitada:
+            if len(nova_senha) < 8:
+                raise ValueError("A nova senha deve ter pelo menos 8 caracteres.")
+            if nova_senha != confirmar_senha:
+                raise ValueError("A nova senha e a confirmação não coincidem.")
+
+        usuario.nome = form["nome"]
+        usuario.email = form["email"]
+        usuario.jornada = form["jornada"]
+        usuario.objetivo = form["objetivo"]
+        usuario.tempo_disponivel = tempo
+
+        if senha_solicitada:
+            usuario.senha_hash = generate_password_hash(nova_senha)
+
+        repositorio.atualizar(usuario)
+        session["mensagem_perfil"] = "Seus dados foram atualizados com sucesso."
+        return redirect(url_for("pagina_perfil"))
+
+    except ValueError as erro:
+        return render_template(
+            "perfil.html", usuario=usuario, erro=str(erro), sucesso=None, form=form
+        ), 400
+
+
+@app.route("/configurar-proprietario", methods=["GET", "POST"])
+def configurar_primeiro_proprietario():
+    """Ativação inicial, disponível somente enquanto ainda não há proprietários."""
+    repositorio = UsuarioRepository()
+    if repositorio.contar_proprietarios() > 0:
+        usuario_atual = usuario_da_sessao()
+        if usuario_atual and usuario_atual.is_owner:
+            return redirect(url_for("pagina_admin_usuarios"))
+        abort(404)
+
+    usuario = usuario_da_sessao()
+    if usuario is None:
+        return redirect(url_for("pagina_login"))
+
+    if request.method == "GET":
+        return render_template("configurar_proprietario.html", usuario=usuario, erro=None)
+
+    token_informado = request.form.get("token_configuracao", "")
+    token_esperado = app.config["TOKEN_PROPRIETARIO"]
+    if not secrets.compare_digest(token_informado, token_esperado):
+        return render_template(
+            "configurar_proprietario.html",
+            usuario=usuario,
+            erro="Código de configuração inválido. Confira o terminal do Flask.",
+        ), 403
+
+    if not repositorio.definir_proprietario(usuario.id, True):
+        return render_template(
+            "configurar_proprietario.html",
+            usuario=usuario,
+            erro="Não foi possível ativar o perfil de proprietário.",
+        ), 400
+
+    session["mensagem_admin"] = "Perfil de proprietário ativado com sucesso."
+    return redirect(url_for("pagina_admin_usuarios"))
+
+
+@app.route("/admin/usuarios", methods=["GET"])
+def pagina_admin_usuarios():
+    proprietario = exigir_proprietario()
+    if proprietario is None:
+        return redirect(url_for("pagina_login"))
+
+    sucesso = session.pop("mensagem_admin", None)
+    contas = UsuarioRepository().listar_para_administracao()
+    return render_template(
+        "admin_usuarios.html",
+        usuario=proprietario,
+        contas=contas,
+        sucesso=sucesso,
+        erro=None,
+    )
+
+
+@app.route("/admin/usuarios/<int:id_usuario>/excluir", methods=["POST"])
+def admin_excluir_usuario(id_usuario):
+    proprietario = exigir_proprietario()
+    if proprietario is None:
+        return redirect(url_for("pagina_login"))
+
+    repositorio = UsuarioRepository()
+    alvo = repositorio.buscar_por_id(id_usuario)
+    if alvo is None:
+        session["mensagem_admin"] = "A conta selecionada não foi encontrada."
+        return redirect(url_for("pagina_admin_usuarios"))
+
+    if alvo.id == proprietario.id:
+        session["mensagem_admin"] = "Você não pode excluir a própria conta enquanto está conectado."
+        return redirect(url_for("pagina_admin_usuarios"))
+
+    if alvo.is_owner:
+        session["mensagem_admin"] = "Contas de proprietários não podem ser excluídas por este painel. Remova o papel de proprietário primeiro."
+        return redirect(url_for("pagina_admin_usuarios"))
+
+    if repositorio.excluir(id_usuario):
+        session["mensagem_admin"] = (
+            f"A conta de {alvo.email} foi excluída. O e-mail e o hash da senha foram removidos."
+        )
+    else:
+        session["mensagem_admin"] = "Não foi possível excluir a conta selecionada."
+    return redirect(url_for("pagina_admin_usuarios"))
+
+
+@app.route("/admin/usuarios/<int:id_usuario>/papel", methods=["POST"])
+def admin_alterar_papel(id_usuario):
+    proprietario = exigir_proprietario()
+    if proprietario is None:
+        return redirect(url_for("pagina_login"))
+
+    repositorio = UsuarioRepository()
+    alvo = repositorio.buscar_por_id(id_usuario)
+    acao = request.form.get("acao", "")
+
+    if alvo is None:
+        session["mensagem_admin"] = "A conta selecionada não foi encontrada."
+        return redirect(url_for("pagina_admin_usuarios"))
+
+    if alvo.id == proprietario.id:
+        session["mensagem_admin"] = "Você não pode alterar seu próprio papel por esta tela."
+        return redirect(url_for("pagina_admin_usuarios"))
+
+    if acao == "promover":
+        if not alvo.senha_hash:
+            session["mensagem_admin"] = (
+                "Defina uma senha para esta conta antes de promovê-la a proprietária."
+            )
+        else:
+            repositorio.definir_proprietario(id_usuario, True)
+            session["mensagem_admin"] = f"{alvo.email} agora é proprietário do MyFlow."
+    elif acao == "rebaixar":
+        if not alvo.is_owner:
+            session["mensagem_admin"] = "Essa conta já é uma conta comum."
+        elif repositorio.contar_proprietarios() <= 1:
+            session["mensagem_admin"] = "Não é possível remover o último proprietário."
+        else:
+            repositorio.definir_proprietario(id_usuario, False)
+            session["mensagem_admin"] = f"O papel de proprietário de {alvo.email} foi removido."
+    else:
+        session["mensagem_admin"] = "Ação de administração inválida."
+
+    return redirect(url_for("pagina_admin_usuarios"))
+
+
+@app.route("/admin/usuarios/<int:id_usuario>/senha", methods=["POST"])
+def admin_definir_senha(id_usuario):
+    proprietario = exigir_proprietario()
+    if proprietario is None:
+        return redirect(url_for("pagina_login"))
+
+    repositorio = UsuarioRepository()
+    alvo = repositorio.buscar_por_id(id_usuario)
+    if alvo is None:
+        session["mensagem_admin"] = "A conta selecionada não foi encontrada."
+        return redirect(url_for("pagina_admin_usuarios"))
+
+    if alvo.is_owner:
+        session["mensagem_admin"] = "Por segurança, use a página Meu perfil para alterar a senha de uma conta proprietária."
+        return redirect(url_for("pagina_admin_usuarios"))
+
+    senha = request.form.get("nova_senha", "")
+    confirmacao = request.form.get("confirmar_senha", "")
+    if len(senha) < 8 or senha != confirmacao:
+        session["mensagem_admin"] = "A senha deve ter pelo menos 8 caracteres e coincidir com a confirmação."
+        return redirect(url_for("pagina_admin_usuarios"))
+
+    alvo.senha_hash = generate_password_hash(senha)
+    try:
+        repositorio.atualizar(alvo)
+        session["mensagem_admin"] = (
+            f"Senha definida para {alvo.email}. O sistema armazenou apenas o hash. "
+            "Informe a senha temporária diretamente ao usuário e oriente-o a alterá-la em Meu perfil."
+        )
+    except ValueError as erro:
+        session["mensagem_admin"] = str(erro)
+
+    return redirect(url_for("pagina_admin_usuarios"))
+
+
 if __name__ == "__main__":
     inicializar_banco()
-    app.run(debug=True)
+    if not os.environ.get("MYFLOW_SECRET_KEY"):
+        print("[MyFlow] Aviso: MYFLOW_SECRET_KEY não definida; as sessões serão encerradas ao reiniciar o app.")
+    repositorio_inicial = UsuarioRepository()
+    if repositorio_inicial.contar_proprietarios() == 0:
+        print("\n[MyFlow] Ainda não há proprietário configurado.")
+        if os.environ.get("MYFLOW_OWNER_SETUP_TOKEN"):
+            print("[MyFlow] Use o token definido na variável MYFLOW_OWNER_SETUP_TOKEN.")
+        else:
+            print("[MyFlow] Token de configuração do primeiro proprietário:")
+            print(TOKEN_PROPRIETARIO)
+        print("[MyFlow] Faça login com sua conta e abra /configurar-proprietario.\n")
+    # use_reloader=False mantém válido o token de ativação inicial exibido no terminal.
+    app.run(debug=True, use_reloader=False)

@@ -26,12 +26,7 @@
                 Configure seu curso para continuar.
             </p>
         </header>
-
-        <div class="barra-acoes">
-            <form action="{{ url_for('sair') }}" method="POST" class="form-sair">
-                <button type="submit" class="botao-sair">Sair da conta</button>
-            </form>
-        </div>
+        {% include "_nav_conta.html" %}
 
         <section class="formulario-container">
 
@@ -96,6 +91,7 @@
                     action="{{ url_for('pagina_curso') }}"
                     method="POST"
                 >
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
                     <div class="campo">
                         <label for="nome">Nome do curso</label>

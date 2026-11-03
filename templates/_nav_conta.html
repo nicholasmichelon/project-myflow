@@ -1,0 +1,17 @@
+<nav class="navegacao-conta" aria-label="Navegação da conta">
+    <a href="{{ url_for('pagina_dashboard') }}">Painel</a>
+    <a href="{{ url_for('pagina_tarefas') }}">Tarefas</a>
+    <a href="{{ url_for('pagina_agenda') }}">Agenda</a>
+    <a href="{{ url_for('pagina_perfil') }}">Meu perfil</a>
+    <a href="{{ url_for('pagina_curso') }}">Meu curso</a>
+    <a href="{{ url_for('pagina_disciplinas') }}">Disciplinas</a>
+    {% if usuario.is_owner %}
+        <a href="{{ url_for('pagina_admin_usuarios') }}">Administração</a>
+    {% elif pode_configurar_proprietario %}
+        <a href="{{ url_for('configurar_primeiro_proprietario') }}">Ativar proprietário</a>
+    {% endif %}
+    <form action="{{ url_for('sair') }}" method="POST" class="form-sair">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="botao-sair">Sair da conta</button>
+    </form>
+</nav>

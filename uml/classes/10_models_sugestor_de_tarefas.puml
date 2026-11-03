@@ -1,0 +1,24 @@
+@startuml 10_models_sugestor_de_tarefas
+title MyFlow - Sugestão da próxima ação
+skinparam classAttributeIconSize 0
+class SugestorDeTarefas {
+  +tempo_disponivel : int
+  --
+  +filtrar_por_tempo(tarefas) : list[Tarefa]
+  +sugerir_proxima_acao(tarefas, hoje=None) : Tarefa | None
+}
+class Tarefa {
+  +titulo : str
+  +prazo : str | None
+  +prioridade : str
+  +duracao_estimada : int
+  +concluida : bool
+  --
+  +esta_atrasada(data_atual=None) : bool
+}
+SugestorDeTarefas ..> Tarefa : avalia tarefas pendentes
+note right of SugestorDeTarefas
+  Regras: tarefas não concluídas que cabem no tempo;
+  primeiro atrasadas, depois prioridade, prazo e duração.
+end note
+@enduml

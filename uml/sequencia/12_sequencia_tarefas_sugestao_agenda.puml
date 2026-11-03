@@ -1,0 +1,36 @@
+@startuml 12_sequencia_tarefas_sugestao_agenda
+title MyFlow - Cadastro, sugestão e conclusão de tarefa
+actor Usuario
+boundary "Interface Flask" as UI
+control "TarefaRepository" as Repo
+control "SugestorDeTarefas" as Sugestor
+database "SQLite" as DB
+
+Usuario -> UI : abre Tarefas
+UI -> Repo : listar_do_usuario(usuario_id)
+Repo -> DB : SELECT tarefas do usuário
+DB --> Repo : tarefas
+Repo --> UI : lista de tarefas
+
+Usuario -> UI : envia formulário de tarefa
+UI -> Repo : criar(tarefa)
+Repo -> DB : INSERT tarefa com usuario_id
+DB --> Repo : id gerado
+Repo --> UI : confirmação
+UI --> Usuario : tarefa cadastrada
+
+Usuario -> UI : abre Painel
+UI -> Repo : listar_do_usuario(usuario_id)
+Repo -> DB : SELECT tarefas pendentes
+DB --> Repo : tarefas
+Repo --> UI : tarefas
+UI -> Sugestor : sugerir_proxima_acao(tarefas)
+Sugestor --> UI : tarefa recomendada ou nenhuma
+UI --> Usuario : exibe sugestão e prazos
+
+Usuario -> UI : marca tarefa como concluída
+UI -> Repo : atualizar(tarefa)
+Repo -> DB : UPDATE condicionado ao usuário
+DB --> Repo : resultado
+UI --> Usuario : progresso atualizado
+@enduml

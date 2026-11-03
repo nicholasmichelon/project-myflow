@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFlow | Ativar proprietário</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<main class="container">
+    <header class="cabecalho">
+        <div class="logo">MyFlow</div>
+        <h1>Configuração inicial</h1>
+        <p>Ative o perfil de proprietário para administrar contas.</p>
+    </header>
+    <section class="formulario-container">
+        <div class="mensagem aviso"><strong>Acesso protegido</strong><p>Esta configuração só funciona enquanto ainda não houver proprietário. O código é exibido no terminal que executa o Flask. Não compartilhe esse código.</p></div>
+        {% if erro %}<div class="mensagem erro" role="alert"><p>{{ erro }}</p></div>{% endif %}
+        <form method="POST" action="{{ url_for('configurar_primeiro_proprietario') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="campo"><label for="token_configuracao">Código de configuração</label><input type="password" id="token_configuracao" name="token_configuracao" autocomplete="off" required></div>
+            <button type="submit" class="botao-cadastro">Ativar meu perfil de proprietário</button>
+        </form>
+    </section>
+    <footer class="rodape"><p>MyFlow — um passo de cada vez.</p></footer>
+</main>
+</body>
+</html>

@@ -61,6 +61,31 @@ package "models" #F4F8FF {
     +reabrir() : bool
     +to_dict() : dict
   }
+
+  class Tarefa {
+    +id : int | None
+    +usuario_id : int
+    +disciplina_id : int | None
+    +titulo : str
+    +descricao : str
+    +prazo : str | None
+    +prioridade : str
+    +duracao_estimada : int
+    +concluida : bool
+    --
+    +concluir() : bool
+    +reabrir() : bool
+    +esta_atrasada(data_atual) : bool
+    +to_dict() : dict
+  }
+
+  class SugestorDeTarefas {
+    +tempo_disponivel : int
+    --
+    +filtrar_por_tempo(tarefas) : list[Tarefa]
+    +sugerir_proxima_acao(tarefas, hoje) : Tarefa | None
+  }
+
 }
 
 package "repository" #F4FFF6 {
@@ -95,6 +120,15 @@ package "repository" #F4FFF6 {
     +calcular_progresso(usuario_id, curso_id) : float
   }
 
+  class TarefaRepository {
+    +criar(tarefa) : int
+    +listar_do_usuario(usuario_id, incluir_concluidas) : list[Tarefa]
+    +buscar_por_id(tarefa_id, usuario_id) : Tarefa | None
+    +atualizar(tarefa) : bool
+    +excluir(tarefa_id, usuario_id) : bool
+    +resumo_do_usuario(usuario_id) : dict
+  }
+
   class DisciplinaRepository {
     +{static} linha_para_objeto(linha) : Disciplina
     --
@@ -120,13 +154,17 @@ database "SQLite" as db
 Usuario "0..*" --> "0..1" Curso : curso
 Curso "1" o-- "0..*" Disciplina : disciplinas
 Usuario "1" -- "0..*" ProgressoDisciplina : progresso individual
+Usuario "1" -- "0..*" Tarefa : tarefas pessoais
 Disciplina "1" -- "0..*" ProgressoDisciplina : status por usuário
+Disciplina "0..1" <-- "0..*" Tarefa : associada opcionalmente
 
 ' Cada repository persiste o seu model
 UsuarioRepository ..> Usuario
 CursoRepository ..> Curso
 DisciplinaRepository ..> Disciplina
 ProgressoDisciplinaRepository ..> ProgressoDisciplina
+TarefaRepository ..> Tarefa
+SugestorDeTarefas ..> Tarefa : recomenda
 
 ' Colaboração entre repositories
 UsuarioRepository ..> CursoRepository : carrega o curso
@@ -137,6 +175,7 @@ UsuarioRepository ..> conexao
 CursoRepository ..> conexao
 DisciplinaRepository ..> conexao
 ProgressoDisciplinaRepository ..> conexao
+TarefaRepository ..> conexao
 conexao ..> db
 
 legend right
@@ -148,6 +187,7 @@ legend right
   Properties = getter/setter com validação (ValueError)
   Senha do usuário é armazenada como hash, nunca em texto puro.
   Progresso de conclusão é individual: Usuario + Disciplina.
+  Tarefas são pessoais mesmo quando o curso é compartilhado.
 endlegend
 
 @enduml

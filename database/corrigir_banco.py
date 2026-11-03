@@ -59,6 +59,7 @@ def migrar():
             linha[1] for linha in conexao.execute("PRAGMA table_info(usuarios)")
         }
         expressao_senha = "senha_hash" if "senha_hash" in colunas_atuais else "NULL"
+        expressao_proprietario = "is_owner" if "is_owner" in colunas_atuais else "0"
 
         conexao.execute("PRAGMA foreign_keys = OFF")
         conexao.execute("BEGIN")
@@ -74,6 +75,7 @@ def migrar():
                     CHECK (tempo_disponivel > 0),
                 curso_id INTEGER,
                 senha_hash TEXT,
+                is_owner INTEGER NOT NULL DEFAULT 0 CHECK (is_owner IN (0, 1)),
                 FOREIGN KEY (curso_id)
                     REFERENCES cursos(id)
                     ON DELETE SET NULL
@@ -83,11 +85,11 @@ def migrar():
         conexao.execute(f"""
             INSERT INTO usuarios_nova (
                 id, nome, email, jornada, objetivo,
-                tempo_disponivel, curso_id, senha_hash
+                tempo_disponivel, curso_id, senha_hash, is_owner
             )
             SELECT
                 id, nome, email, jornada, objetivo,
-                tempo_disponivel, curso_id, {expressao_senha}
+                tempo_disponivel, curso_id, {expressao_senha}, {expressao_proprietario}
             FROM usuarios
         """)
 

@@ -1,0 +1,72 @@
+@startuml 05_repository_cursos
+' MyFlow - repository/cursos_repository.py
+title MyFlow - repository/cursos_repository.py (classe CursoRepository)
+
+allowmixing
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam classFontStyle bold
+hide circle
+
+package "repository" {
+  class CursoRepository {
+    -- auxiliares (uso interno) --
+    -_salvar_disciplina(conexao, disciplina : Disciplina, id_curso : int) : None
+    -_linha_para_objeto(conexao, linha) : Curso
+    -- CRUD --
+    +inserir(curso : Curso) : int
+    +listar_todos() : list[Curso]
+    +buscar_por_id(id_curso : int) : Curso | None
+    +buscar_por_nome(nome : str) : Curso | None
+    +atualizar(curso : Curso) : bool
+    +excluir(id_curso : int) : bool
+  }
+
+  class DisciplinaRepository {
+    +{static} linha_para_objeto(linha) : Disciplina
+  }
+}
+
+package "models" {
+  class Curso {
+    +id : int | None
+    +nome : str
+    +nivel : str
+    +disciplinas : list[Disciplina]
+  }
+  class Disciplina {
+    +id : int | None
+  }
+  Curso o-- "0..*" Disciplina
+}
+
+package "database" {
+  class conexao <<módulo>> {
+    +obter_conexao() : sqlite3.Connection
+  }
+}
+
+database "SQLite\ntabelas cursos\ne disciplinas" as db
+
+CursoRepository ..> Curso : cria / persiste
+CursoRepository ..> Disciplina : grava junto com o curso
+CursoRepository ..> DisciplinaRepository : linha_para_objeto()
+CursoRepository ..> conexao : obter_conexao()
+conexao ..> db
+
+note right of CursoRepository
+  <b>Observações</b>
+  - nome do curso é único no banco
+  - inserir(): grava o curso e todas as disciplinas
+    na MESMA transação (um único commit)
+  - atualizar(): sincroniza a lista
+      novas -> INSERT
+      existentes -> UPDATE
+      retiradas da lista -> curso_id = NULL
+      (não são apagadas)
+  - excluir(): remove só o curso
+  - ler do banco devolve o Curso já com
+    suas disciplinas carregadas
+end note
+
+@enduml

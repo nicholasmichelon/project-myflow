@@ -60,6 +60,7 @@
                 action="{{ url_for('pagina_cadastro') }}"
                 method="POST"
             >
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
                 <div class="campo">
                     <label for="nome">Nome completo</label>

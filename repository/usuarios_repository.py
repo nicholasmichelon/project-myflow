@@ -39,6 +39,7 @@ class UsuarioRepository:
             linha['nome'], linha['email'], linha['jornada'],
             linha['objetivo'], linha['tempo_disponivel'], id=linha['id'],
             senha_hash=(linha['senha_hash'] if 'senha_hash' in linha.keys() else None),
+            is_owner=bool(linha['is_owner']) if 'is_owner' in linha.keys() else False,
         )
         if linha['curso_id'] is not None:
             usuario.curso = CursoRepository().buscar_por_id(linha['curso_id'])
@@ -55,11 +56,11 @@ class UsuarioRepository:
         try:
             cursor = conexao.execute(
                 'INSERT INTO usuarios '
-                '(nome, email, jornada, objetivo, tempo_disponivel, curso_id, senha_hash) '
-                'VALUES (?, ?, ?, ?, ?, ?, ?)',
+                '(nome, email, jornada, objetivo, tempo_disponivel, curso_id, senha_hash, is_owner) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                 (usuario.nome, usuario.email, usuario.jornada,
                  usuario.objetivo, usuario.tempo_disponivel, id_curso,
-                 usuario.senha_hash),
+                 usuario.senha_hash, int(usuario.is_owner)),
             )
             conexao.commit()
             usuario.id = cursor.lastrowid
@@ -111,15 +112,60 @@ class UsuarioRepository:
             cursor = conexao.execute(
                 'UPDATE usuarios SET nome = ?, email = ?, jornada = ?, '
                 'objetivo = ?, tempo_disponivel = ?, curso_id = ?, '
-                'senha_hash = ? WHERE id = ?',
+                'senha_hash = ?, is_owner = ? WHERE id = ?',
                 (usuario.nome, usuario.email, usuario.jornada,
                  usuario.objetivo, usuario.tempo_disponivel, id_curso,
-                 usuario.senha_hash, usuario.id),
+                 usuario.senha_hash, int(usuario.is_owner), usuario.id),
             )
             conexao.commit()
             return cursor.rowcount > 0
         except sqlite3.IntegrityError as erro:
             raise ValueError(f'Não foi possível salvar o usuário: {erro}') from erro
+        finally:
+            conexao.close()
+
+    def contar_proprietarios(self):
+        """Retorna quantas contas possuem privilégios de proprietário."""
+        conexao = obter_conexao()
+        try:
+            linha = conexao.execute(
+                "SELECT COUNT(*) AS total FROM usuarios WHERE is_owner = 1"
+            ).fetchone()
+            return linha["total"]
+        finally:
+            conexao.close()
+
+    def definir_proprietario(self, id_usuario, is_owner=True):
+        """Concede ou remove o perfil de proprietário de uma conta."""
+        if not isinstance(is_owner, bool):
+            raise ValueError("is_owner deve ser True ou False")
+        conexao = obter_conexao()
+        try:
+            cursor = conexao.execute(
+                "UPDATE usuarios SET is_owner = ? WHERE id = ?",
+                (int(is_owner), id_usuario),
+            )
+            conexao.commit()
+            return cursor.rowcount > 0
+        finally:
+            conexao.close()
+
+    def listar_para_administracao(self):
+        """Lista dados de contas sem jamais retornar hashes de senha."""
+        conexao = obter_conexao()
+        try:
+            linhas = conexao.execute(
+                """
+                SELECT u.id, u.nome, u.email, u.jornada, u.is_owner,
+                       c.nome AS curso_nome,
+                       CASE WHEN u.senha_hash IS NULL OR u.senha_hash = ''
+                            THEN 0 ELSE 1 END AS senha_configurada
+                FROM usuarios u
+                LEFT JOIN cursos c ON c.id = u.curso_id
+                ORDER BY u.is_owner DESC, u.nome COLLATE NOCASE
+                """
+            ).fetchall()
+            return [dict(linha) for linha in linhas]
         finally:
             conexao.close()
 

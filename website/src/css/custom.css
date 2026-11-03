@@ -1,30 +1,133 @@
-/**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
- */
-
-/* You can override the default Infima variables here. */
+/* Tokens visuais do portal MyFlow. Sem fontes externas ou imagens remotas. */
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
-  --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --ifm-color-primary: #3157d5;
+  --ifm-color-primary-dark: #2549c4;
+  --ifm-color-primary-darker: #2245ba;
+  --ifm-color-primary-darkest: #1c3999;
+  --ifm-color-primary-light: #486be0;
+  --ifm-color-primary-lighter: #5878e5;
+  --ifm-color-primary-lightest: #8098ee;
+  --ifm-font-family-base: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ifm-font-family-monospace: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --ifm-font-size-base: 15px;
+  --ifm-line-height-base: 1.72;
+  --ifm-heading-font-weight: 750;
+  --ifm-navbar-height: 4.35rem;
+  --ifm-navbar-background-color: rgba(255, 255, 255, .94);
+  --ifm-navbar-shadow: 0 1px 0 rgba(34, 51, 88, .08);
+  --ifm-footer-background-color: #f1f4fa;
+  --ifm-code-font-size: 88%;
+  --ifm-global-radius: .75rem;
+  --mf-ink: #182344;
+  --mf-muted: #66718b;
+  --mf-muted-light: #9ba5bb;
+  --mf-blue: #3157d5;
+  --mf-blue-deep: #2447bd;
+  --mf-blue-soft: #edf1ff;
+  --mf-blue-line: #d9e1ff;
+  --mf-mint: #62cfae;
+  --mf-line: #e5e9f2;
+  --mf-line-strong: #d3daea;
+  --mf-hero: #f8faff;
+  --mf-panel: #ffffff;
+  --mf-panel-subtle: #f9faff;
+  --mf-track: #e7ebf7;
+  --mf-band: #f3f6fc;
+  --ifm-background-color: #ffffff;
+  --ifm-font-color-base: #28334d;
+  --ifm-heading-color: #182344;
+  --ifm-link-color: #3157d5;
+  --ifm-link-hover-color: #2447bd;
+  --ifm-toc-border-color: #e4e8f1;
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+html { scroll-behavior: smooth; }
+body { letter-spacing: -.004em; }
+.navbar { backdrop-filter: blur(16px); border-bottom: 1px solid rgba(221, 227, 241, .85); }
+.navbar__title { color: var(--mf-ink); font-weight: 850; letter-spacing: -.04em; }
+.navbar__link { font-size: .88rem; font-weight: 650; }
+.navbar__link--active { color: var(--mf-blue); }
+.footer { border-top: 1px solid var(--mf-line); }
+.footer__title { font-size: .82rem; text-transform: uppercase; letter-spacing: .09em; color: var(--mf-muted); }
+.footer__link-item { font-size: .84rem; }
+.footer__copyright { font-size: .77rem; color: var(--mf-muted); }
+.markdown { max-width: 850px; }
+.markdown > h1 { letter-spacing: -.045em; line-height: 1.12; font-size: clamp(2rem, 4vw, 2.9rem); }
+.markdown h2 { letter-spacing: -.03em; margin-top: 2.6rem; padding-bottom: .45rem; border-bottom: 1px solid var(--mf-line); }
+.markdown h3 { letter-spacing: -.02em; margin-top: 1.8rem; }
+.markdown p, .markdown li { line-height: 1.78; }
+.markdown a { text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.markdown table { display: table; width: 100%; font-size: .89rem; }
+.markdown th { background: #f5f7fc; color: #273452; font-weight: 750; }
+.markdown td, .markdown th { padding: .72rem .85rem; border-color: var(--mf-line); }
+.markdown tr:nth-child(even) { background: #fbfcff; }
+.markdown code { border: 1px solid rgba(91, 109, 150, .12); }
+.markdown pre { border: 1px solid var(--mf-line); border-radius: .9rem; box-shadow: 0 5px 20px rgba(24, 35, 68, .035); }
+.admonition { border-radius: .8rem; box-shadow: none; border: 1px solid var(--mf-line); }
+.theme-doc-sidebar-container { border-right: 1px solid var(--mf-line); }
+.menu__link { border-radius: .52rem; font-size: .86rem; }
+.menu__link--active:not(.menu__link--sublist) { font-weight: 750; background: var(--mf-blue-soft); color: var(--mf-blue); }
+.table-of-contents { font-size: .8rem; }
+.pagination-nav__link { border: 1px solid var(--mf-line); border-radius: .85rem; transition: border-color .18s ease, transform .18s ease; }
+.pagination-nav__link:hover { border-color: var(--mf-blue-line); transform: translateY(-2px); }
+.doc-callout { padding: 1.05rem 1.15rem; border: 1px solid var(--mf-blue-line); border-left: 3px solid var(--mf-blue); border-radius: .8rem; background: #f7f9ff; margin: 1.5rem 0; }
+.doc-callout strong { color: #2344ad; }
+.doc-callout p { margin: .25rem 0 0; color: #586784; }
+.doc-link-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; margin: 1.6rem 0 2.1rem; }
+.doc-link-card { display: flex; flex-direction: column; gap: .45rem; min-height: 150px; padding: 1.1rem 1.15rem; border-radius: .9rem; border: 1px solid var(--mf-line); background: #fff; color: inherit !important; text-decoration: none !important; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.doc-link-card:hover { transform: translateY(-3px); border-color: var(--mf-blue-line); box-shadow: 0 10px 24px rgba(30, 52, 100, .06); }
+.doc-link-card__eyebrow { color: var(--mf-blue); font-size: .68rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.doc-link-card strong { color: var(--mf-ink); font-size: 1rem; }
+.doc-link-card span:last-child { color: var(--mf-muted); font-size: .82rem; line-height: 1.55; }
+
 [data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --ifm-color-primary: #91a7ff;
+  --ifm-color-primary-dark: #738efc;
+  --ifm-color-primary-darker: #6381fa;
+  --ifm-color-primary-darkest: #3157d5;
+  --ifm-color-primary-light: #a9b9ff;
+  --ifm-color-primary-lighter: #bbc8ff;
+  --ifm-color-primary-lightest: #dce3ff;
+  --ifm-navbar-background-color: rgba(19, 24, 40, .94);
+  --ifm-footer-background-color: #151b2b;
+  --ifm-background-color: #101625;
+  --ifm-font-color-base: #dce4f5;
+  --ifm-heading-color: #f0f4ff;
+  --ifm-link-color: #a2b3ff;
+  --ifm-link-hover-color: #c3ceff;
+  --ifm-toc-border-color: #2a344c;
+  --mf-ink: #f0f4ff;
+  --mf-muted: #a3afc8;
+  --mf-muted-light: #7f8da9;
+  --mf-blue: #91a7ff;
+  --mf-blue-deep: #aabaff;
+  --mf-blue-soft: #202b4b;
+  --mf-blue-line: #334269;
+  --mf-mint: #70d7b8;
+  --mf-line: #283249;
+  --mf-line-strong: #3b4863;
+  --mf-hero: #111a2c;
+  --mf-panel: #192238;
+  --mf-panel-subtle: #141d31;
+  --mf-track: #2c3854;
+  --mf-band: #151e30;
+}
+[data-theme='dark'] .markdown th { background: #1d2940; color: #edf2ff; }
+[data-theme='dark'] .markdown tr:nth-child(even) { background: #151e30; }
+[data-theme='dark'] .doc-callout { background: #192744; border-color: #33456b; }
+[data-theme='dark'] .doc-callout strong { color: #b8c5ff; }
+[data-theme='dark'] .doc-callout p { color: #c0cbe1; }
+[data-theme='dark'] .doc-link-card { background: #192238; border-color: #283249; }
+[data-theme='dark'] .doc-link-card strong { color: #f0f4ff; }
+[data-theme='dark'] .doc-link-card span:last-child { color: #a3afc8; }
+[data-theme='dark'] .navbar__title { color: #f0f4ff; }
+[data-theme='dark'] .markdown table { color: var(--ifm-font-color-base); }
+
+@media (max-width: 650px) {
+  .doc-link-grid { grid-template-columns: 1fr; }
+  .markdown table { display: block; overflow-x: auto; white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

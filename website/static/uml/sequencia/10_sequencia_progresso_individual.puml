@@ -1,0 +1,45 @@
+@startuml 10_sequencia_progresso_individual
+title MyFlow - Sequência: atualizar progresso individual
+
+skinparam shadowing false
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Pessoa usuária" as pessoa
+participant "Flask\npagina_disciplinas()" as app
+participant ":ProgressoDisciplina" as progresso
+participant ":ProgressoDisciplinaRepository" as repo
+participant "database.conexao" as cx
+database "SQLite" as db
+
+pessoa -> app : POST /disciplinas\n(acao, disciplina_id)
+app -> repo : buscar(usuario_id, disciplina_id)
+repo -> cx : obter_conexao()
+cx --> repo : conexão
+repo -> db : SELECT progresso individual
+db --> repo : progresso ou None
+repo --> app : ProgressoDisciplina ou None
+
+alt sem progresso anterior
+  app -> progresso : cria progresso (concluida=False)
+else progresso encontrado
+  note over app, progresso
+    Utiliza o estado de conclusão deste usuário,
+    não o estado de outro usuário do mesmo curso.
+  end note
+end
+
+alt ação = concluir
+  app -> progresso : concluir()
+else ação = reabrir
+  app -> progresso : reabrir()
+end
+
+app -> repo : salvar(progresso)
+repo -> db : INSERT ... ON CONFLICT UPDATE\n(usuario_id, disciplina_id, concluida)
+db --> repo : gravação confirmada
+repo --> app : True
+app --> pessoa : redireciona com mensagem de confirmação
+
+@enduml

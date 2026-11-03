@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFlow | Tarefas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<main class="container container-amplo">
+    <header class="cabecalho">
+        <div class="logo">MyFlow</div>
+        <h1>Minhas tarefas</h1>
+        <p>Transforme seus objetivos de estudo em próximas ações.</p>
+    </header>
+    {% include "_nav_conta.html" %}
+
+    <section class="formulario-container">
+        {% if sucesso %}<div class="mensagem sucesso" role="status"><strong>Pronto!</strong><p>{{ sucesso }}</p></div>{% endif %}
+        {% if erro %}<div class="mensagem erro" role="alert"><strong>Não foi possível concluir a operação.</strong><p>{{ erro }}</p></div>{% endif %}
+
+        <div class="titulo-formulario"><h2>Adicionar tarefa</h2><p>As tarefas pertencem à sua conta, mesmo quando o curso é compartilhado.</p></div>
+        <form action="{{ url_for('pagina_tarefas') }}" method="POST">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="campo"><label for="titulo">Título</label><input id="titulo" name="titulo" value="{{ form.get('titulo', '') }}" placeholder="Ex.: Revisar encapsulamento em POO" maxlength="160" required></div>
+            <div class="campo"><label for="descricao">Descrição (opcional)</label><textarea id="descricao" name="descricao" rows="3" placeholder="Descreva o que precisa ser feito.">{{ form.get('descricao', '') }}</textarea></div>
+            <div class="campo"><label for="disciplina_id">Disciplina (opcional)</label><select id="disciplina_id" name="disciplina_id"><option value="">Sem disciplina específica</option>{% for disciplina in disciplinas %}<option value="{{ disciplina.id }}" {% if form.get('disciplina_id')|string == disciplina.id|string %}selected{% endif %}>{{ disciplina.nome }} ({{ disciplina.codigo }})</option>{% endfor %}</select></div>
+            <div class="form-grid">
+                <div class="campo"><label for="prazo">Prazo (opcional)</label><input type="date" id="prazo" name="prazo" min="2000-01-01" value="{{ form.get('prazo', '') }}"></div>
+                <div class="campo"><label for="prioridade">Prioridade</label><select id="prioridade" name="prioridade"><option value="alta" {% if form.get('prioridade') == 'alta' %}selected{% endif %}>Alta</option><option value="media" {% if form.get('prioridade', 'media') == 'media' %}selected{% endif %}>Média</option><option value="baixa" {% if form.get('prioridade') == 'baixa' %}selected{% endif %}>Baixa</option></select></div>
+                <div class="campo"><label for="duracao_estimada">Duração estimada (minutos)</label><input type="number" id="duracao_estimada" name="duracao_estimada" min="1" step="1" value="{{ form.get('duracao_estimada', '30') }}" required></div>
+            </div>
+            <button type="submit" class="botao-cadastro">Adicionar tarefa <span aria-hidden="true">→</span></button>
+        </form>
+    </section>
+
+    <section class="painel-lista espacamento-superior">
+        <div class="secao-titulo-linha"><div><h2>Tarefas cadastradas</h2><p>{{ tarefas|length }} atividade(s) nesta conta</p></div><a href="{{ url_for('pagina_agenda') }}">Abrir agenda</a></div>
+        {% if tarefas %}
+            <div class="tarefas-lista">
+            {% for tarefa in tarefas %}
+                <article class="tarefa-card {% if tarefa.concluida %}tarefa-concluida{% endif %}">
+                    <div class="tarefa-card-conteudo">
+                        <div class="tarefa-titulo-linha"><h3>{{ tarefa.titulo }}</h3><span class="etiqueta prioridade-{{ tarefa.prioridade }}">Prioridade {{ 'média' if tarefa.prioridade == 'media' else tarefa.prioridade }}</span></div>
+                        {% if tarefa.descricao %}<p class="tarefa-descricao">{{ tarefa.descricao }}</p>{% endif %}
+                        <div class="disciplina-meta"><span>{% if tarefa.disciplina_nome %}{{ tarefa.disciplina_nome }}{% else %}Sem disciplina{% endif %}</span><span>{{ tarefa.duracao_estimada }} min</span><span>{% if tarefa.prazo %}Prazo: {{ tarefa.prazo }}{% else %}Sem prazo{% endif %}</span></div>
+                        {% if tarefa.esta_atrasada(hoje) %}<span class="texto-atrasada">Prazo vencido</span>{% endif %}
+                        {% if tarefa.concluida %}<span class="etiqueta concluida">Concluída</span>{% else %}<span class="etiqueta andamento">Pendente</span>{% endif %}
+                    </div>
+                    <div class="tarefa-acoes">
+                        <a class="botao-progresso botao-editar" href="{{ url_for('editar_tarefa', tarefa_id=tarefa.id) }}">Editar</a>
+                        <form action="{{ url_for('acao_tarefa', tarefa_id=tarefa.id) }}" method="POST"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="origem" value="tarefas"><input type="hidden" name="acao" value="{{ 'reabrir' if tarefa.concluida else 'concluir' }}"><button class="botao-progresso" type="submit">{{ 'Reabrir' if tarefa.concluida else 'Concluir' }}</button></form>
+                        <form action="{{ url_for('acao_tarefa', tarefa_id=tarefa.id) }}" method="POST" onsubmit="return confirm('Deseja excluir esta tarefa?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="origem" value="tarefas"><input type="hidden" name="acao" value="excluir"><button class="botao-perigo" type="submit">Excluir</button></form>
+                    </div>
+                </article>
+            {% endfor %}
+            </div>
+        {% else %}<p class="lista-vazia">Você ainda não cadastrou tarefas. Use o formulário acima para criar sua primeira atividade.</p>{% endif %}
+    </section>
+    <footer class="rodape"><p>MyFlow — um passo de cada vez.</p></footer>
+</main>
+</body>
+</html>

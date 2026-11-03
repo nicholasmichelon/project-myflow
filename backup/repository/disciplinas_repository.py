@@ -1,0 +1,180 @@
+"""
+repository/disciplina_repository.py
+
+Classe responsável por toda a persistência (acesso ao banco SQLite) dos
+objetos Disciplina.
+
+Observações:
+    - o código da disciplina é único dentro de cada curso (sem diferenciar
+      maiúsculas de minúsculas); por isso, buscar_por_codigo pode receber curso_id
+    - inserir e atualizar lançam ValueError se o banco recusar os dados
+      (por exemplo, código repetido)
+    - inserir também grava o id gerado no próprio objeto Disciplina
+    - o vínculo com o curso (curso_id) é gerenciado pelo CursoRepository
+"""
+
+import sqlite3
+
+from database.conexao import obter_conexao
+from models.disciplinas import Disciplina
+
+
+class DisciplinaRepository:
+
+    @staticmethod
+    def linha_para_objeto(linha):
+        # Converte uma linha do banco em um objeto Disciplina.
+        disciplina = Disciplina(
+            linha['nome'], linha['codigo'], linha['carga_horaria'], id=linha['id']
+        )
+        return disciplina
+
+    def inserir(self, disciplina, curso_id=None):
+        # Parâmetros: disciplina (objeto Disciplina já validado) e curso_id
+        # (opcional, id do curso ao qual a disciplina pertence).
+        # Retorno: o id (int) gerado pelo banco para o novo registro.
+        if curso_id is not None and self.buscar_por_codigo(
+            disciplina.codigo, curso_id
+        ) is not None:
+            raise ValueError(
+                'Já existe uma disciplina com esse código neste curso.'
+            )
+
+        conexao = obter_conexao()
+        try:
+            cursor = conexao.execute(
+                'INSERT INTO disciplinas '
+                '(nome, codigo, carga_horaria, curso_id) '
+                'VALUES (?, ?, ?, ?)',
+                (disciplina.nome, disciplina.codigo, disciplina.carga_horaria,
+                 curso_id),
+            )
+            conexao.commit()
+            disciplina.id = cursor.lastrowid
+            return cursor.lastrowid
+        except sqlite3.IntegrityError as erro:
+            conexao.rollback()
+            raise ValueError(f'Não foi possível salvar a disciplina: {erro}') from erro
+        except Exception:
+            conexao.rollback()
+            raise
+        finally:
+            conexao.close()
+
+    def listar_todos(self):
+        # Retorno: lista de objetos Disciplina (vazia se não houver registros).
+        conexao = obter_conexao()
+        try:
+            linhas = conexao.execute('SELECT * FROM disciplinas').fetchall()
+        finally:
+            conexao.close()
+        return [self.linha_para_objeto(linha) for linha in linhas]
+
+    def listar_por_curso(self, id_curso):
+        # Parâmetro: id_curso (int)
+        # Retorno: lista de Disciplina do curso (vazia se não houver).
+        conexao = obter_conexao()
+        try:
+            linhas = conexao.execute(
+                'SELECT * FROM disciplinas WHERE curso_id = ?', (id_curso,)
+            ).fetchall()
+        finally:
+            conexao.close()
+        return [self.linha_para_objeto(linha) for linha in linhas]
+
+    def buscar_por_id(self, id_disciplina):
+        # Parâmetro: id_disciplina (int)
+        # Retorno: objeto Disciplina ou None se não existir.
+        conexao = obter_conexao()
+        try:
+            linha = conexao.execute(
+                'SELECT * FROM disciplinas WHERE id = ?', (id_disciplina,)
+            ).fetchone()
+        finally:
+            conexao.close()
+        return self.linha_para_objeto(linha) if linha else None
+
+    def buscar_por_codigo(self, codigo, curso_id=None):
+        # O código é único por curso. A comparação casefold() também trata
+        # diferenças de maiúsculas/minúsculas em textos acentuados.
+        if not isinstance(codigo, str) or not codigo.strip():
+            return None
+
+        codigo_normalizado = codigo.strip().casefold()
+        conexao = obter_conexao()
+        try:
+            if curso_id is None:
+                linhas = conexao.execute(
+                    'SELECT * FROM disciplinas ORDER BY id'
+                ).fetchall()
+            else:
+                linhas = conexao.execute(
+                    'SELECT * FROM disciplinas WHERE curso_id = ? ORDER BY id',
+                    (curso_id,),
+                ).fetchall()
+
+            for linha in linhas:
+                if linha['codigo'].casefold() == codigo_normalizado:
+                    return self.linha_para_objeto(linha)
+
+            return None
+        finally:
+            conexao.close()
+
+    def atualizar(self, disciplina):
+        # Parâmetro: disciplina (objeto Disciplina já contendo um id válido)
+        # Retorno: True se alguma linha foi atualizada, False caso contrário.
+        conexao = obter_conexao()
+        try:
+            atual = conexao.execute(
+                'SELECT curso_id FROM disciplinas WHERE id = ?',
+                (disciplina.id,),
+            ).fetchone()
+
+            if atual is None:
+                return False
+
+            curso_id = atual['curso_id']
+            if curso_id is not None:
+                outras = conexao.execute(
+                    'SELECT id, codigo FROM disciplinas '
+                    'WHERE curso_id = ? AND id <> ?',
+                    (curso_id, disciplina.id),
+                ).fetchall()
+
+                codigo_normalizado = disciplina.codigo.casefold()
+                for linha in outras:
+                    if linha['codigo'].casefold() == codigo_normalizado:
+                        raise ValueError(
+                            'Já existe uma disciplina com esse código neste curso.'
+                        )
+
+            cursor = conexao.execute(
+                'UPDATE disciplinas SET nome = ?, codigo = ?, '
+                'carga_horaria = ? WHERE id = ?',
+                (disciplina.nome, disciplina.codigo, disciplina.carga_horaria,
+                 disciplina.id),
+            )
+            conexao.commit()
+            return cursor.rowcount > 0
+        except sqlite3.IntegrityError as erro:
+            conexao.rollback()
+            raise ValueError(f'Não foi possível salvar a disciplina: {erro}') from erro
+        except Exception:
+            conexao.rollback()
+            raise
+        finally:
+            conexao.close()
+
+    def excluir(self, id_disciplina):
+        # Parâmetro: id_disciplina (int)
+        # Retorno: True se alguma linha foi excluída, False caso contrário.
+        conexao = obter_conexao()
+        try:
+            cursor = conexao.execute(
+                'DELETE FROM disciplinas WHERE id = ?', (id_disciplina,)
+            )
+            conexao.commit()
+            return cursor.rowcount > 0
+        finally:
+            conexao.close()

@@ -1,0 +1,21 @@
+@startuml 11_repository_tarefas
+title MyFlow - TarefaRepository
+skinparam classAttributeIconSize 0
+class TarefaRepository {
+  --
+  +criar(tarefa) : int
+  +listar_do_usuario(usuario_id, incluir_concluidas=True) : list[Tarefa]
+  +buscar_por_id(tarefa_id, usuario_id) : Tarefa | None
+  +atualizar(tarefa) : bool
+  +excluir(tarefa_id, usuario_id) : bool
+  +resumo_do_usuario(usuario_id) : dict
+}
+class Tarefa
+class SQLite <<database>>
+TarefaRepository ..> Tarefa : cria e converte
+TarefaRepository ..> SQLite : CRUD com filtro por usuário
+note bottom of TarefaRepository
+  Consultas e alterações sempre são limitadas ao dono da tarefa.
+  Uma disciplina associada precisa pertencer ao curso do usuário.
+end note
+@enduml

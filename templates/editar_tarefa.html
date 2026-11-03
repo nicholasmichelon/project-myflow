@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFlow | Editar tarefa</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<main class="container">
+    <header class="cabecalho">
+        <div class="logo">MyFlow</div>
+        <h1>Editar tarefa</h1>
+        <p>Atualize as informações da sua atividade.</p>
+    </header>
+    {% include "_nav_conta.html" %}
+    <section class="formulario-container">
+        {% if erro %}<div class="mensagem erro" role="alert"><strong>Revise os dados</strong><p>{{ erro }}</p></div>{% endif %}
+        <form action="{{ url_for('editar_tarefa', tarefa_id=tarefa.id) }}" method="POST">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="campo"><label for="titulo">Título</label><input id="titulo" name="titulo" maxlength="160" value="{{ form.get('titulo', tarefa.titulo) }}" required></div>
+            <div class="campo"><label for="descricao">Descrição (opcional)</label><textarea id="descricao" name="descricao" rows="3">{{ form.get('descricao', tarefa.descricao) }}</textarea></div>
+            <div class="campo"><label for="disciplina_id">Disciplina (opcional)</label><select id="disciplina_id" name="disciplina_id"><option value="">Sem disciplina específica</option>{% for disciplina in disciplinas %}<option value="{{ disciplina.id }}" {% if form.get('disciplina_id', tarefa.disciplina_id|string)|string == disciplina.id|string %}selected{% endif %}>{{ disciplina.nome }} ({{ disciplina.codigo }})</option>{% endfor %}</select></div>
+            <div class="campo"><label for="prazo">Prazo (opcional)</label><input type="date" id="prazo" name="prazo" value="{{ form.get('prazo', tarefa.prazo or '') }}"></div>
+            <div class="campo"><label for="prioridade">Prioridade</label><select id="prioridade" name="prioridade"><option value="alta" {% if form.get('prioridade', tarefa.prioridade) == 'alta' %}selected{% endif %}>Alta</option><option value="media" {% if form.get('prioridade', tarefa.prioridade) == 'media' %}selected{% endif %}>Média</option><option value="baixa" {% if form.get('prioridade', tarefa.prioridade) == 'baixa' %}selected{% endif %}>Baixa</option></select></div>
+            <div class="campo"><label for="duracao_estimada">Duração estimada (minutos)</label><input type="number" id="duracao_estimada" name="duracao_estimada" min="1" step="1" value="{{ form.get('duracao_estimada', tarefa.duracao_estimada) }}" required></div>
+            <button type="submit" class="botao-cadastro">Salvar alterações <span aria-hidden="true">→</span></button>
+        </form>
+        <a class="botao-secundario" href="{{ url_for('pagina_tarefas') }}">Cancelar e voltar às tarefas</a>
+    </section>
+    <footer class="rodape"><p>MyFlow — um passo de cada vez.</p></footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,47 @@
+@startuml 07_sequencia_cadastro_usuario
+title MyFlow - Sequência: cadastro do usuário
+
+skinparam shadowing false
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Pessoa usuária" as pessoa
+participant "Flask\npagina_cadastro()" as app
+participant "Werkzeug Security" as seguranca
+participant ":Usuario" as usuario
+participant ":UsuarioRepository" as repo
+participant "database.conexao" as cx
+database "SQLite" as db
+
+pessoa -> app : GET /
+app --> pessoa : renderiza cadastro.html
+
+pessoa -> app : POST / (dados + senha)
+app -> app : valida campos e confirmação de senha
+app -> repo : buscar_por_email(email)
+repo -> cx : obter_conexao()
+cx --> repo : conexão
+repo -> db : SELECT usuário pelo e-mail
+db --> repo : usuário existente ou None
+repo --> app : usuário existente ou None
+
+alt e-mail já cadastrado
+  app --> pessoa : formulário com mensagem de erro
+else e-mail disponível
+  app -> seguranca : generate_password_hash(senha)
+  seguranca --> app : senha_hash
+  app -> usuario : constrói Usuario(..., senha_hash)
+  note right of usuario
+    A senha em texto puro não é persistida.
+    curso começa como None.
+  end note
+  app -> repo : inserir(usuario)
+  repo -> db : INSERT INTO usuarios (..., senha_hash)
+  db --> repo : id gerado
+  repo --> app : id_usuario
+  app -> app : inicia sessão com usuario_id
+  app --> pessoa : redirect para /curso
+end
+
+@enduml
