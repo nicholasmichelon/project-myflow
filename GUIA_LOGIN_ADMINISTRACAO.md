@@ -24,11 +24,25 @@ O primeiro proprietário é ativado uma única vez pela interface. Essa etapa ex
 
 O token é válido apenas durante a execução atual do aplicativo e enquanto não existir proprietário. Para definir seu próprio token antes de iniciar, configure a variável de ambiente `MYFLOW_OWNER_SETUP_TOKEN`.
 
-## 3. Meu perfil
+## 3. Recuperação de senha
+
+Na tela de login, o usuário pode clicar em **Esqueceu sua senha?**, informar o e-mail cadastrado e seguir o link de redefinição. Por segurança, a tela apresenta a mesma confirmação mesmo quando o e-mail não existe. O link expira em 30 minutos e só pode ser utilizado uma vez. A senha nova deve ter pelo menos oito caracteres.
+
+- **Execução local:** sem SMTP configurado, o link de recuperação é exibido no terminal onde o Flask está rodando. Copie o endereço completo e abra-o no navegador. Esse comportamento é destinado ao desenvolvimento local.
+- **Envio por e-mail com Gmail (para destinatários de qualquer provedor):** o Gmail será o remetente; os usuários podem informar endereços Gmail, Outlook, Hotmail ou outros.
+  1. Na Conta Google, ative a verificação em duas etapas e crie uma senha de app em https://myaccount.google.com/apppasswords.
+  2. Na raiz do projeto, copie `.env.example` para `.env`.
+  3. Edite `.env` e substitua `seuemail@gmail.com` pelo seu Gmail e `COLE_AQUI_A_SENHA_DE_APP_DO_GOOGLE` pela senha de app de 16 caracteres. Não use a senha normal do Gmail.
+  4. Instale as dependências e inicie o app: `python -m pip install -r requirements.txt` e `python app.py`. O aplicativo carrega `.env` automaticamente.
+  5. Faça um teste enviando a recuperação para um Gmail e depois para um endereço Outlook/Hotmail. Confira também Spam/Lixo eletrônico.
+  O arquivo `.env` é ignorado pelo Git e não deve ser compartilhado. O STARTTLS fica ativo na porta 587.
+- O banco guarda somente o hash do token, não o token original. Uma nova solicitação invalida o link anterior da mesma conta.
+
+## 4. Meu perfil
 
 A opção **Meu perfil** permite alterar nome, e-mail, jornada, objetivo e tempo disponível. Para trocar e-mail ou senha, o usuário precisa informar sua senha atual. A nova senha precisa ter pelo menos oito caracteres e confirmação igual.
 
-## 4. Administração de contas
+## 5. Administração de contas
 
 Somente contas marcadas como proprietárias podem abrir `/admin/usuarios`; a autorização é verificada no servidor e no banco, não apenas pelo menu.
 
@@ -41,7 +55,7 @@ No painel, proprietários podem:
 
 Senhas nunca são mostradas no painel. Ao definir uma senha temporária, o proprietário deve entregá-la ao titular por um canal confiável e orientá-lo a alterá-la em **Meu perfil**.
 
-## 5. Observações de segurança
+## 6. Observações de segurança
 
 - O arquivo `database/banco.db` contém dados locais; faça backup antes de qualquer migração ou exclusão.
 - Se `MYFLOW_SECRET_KEY` não estiver definida, o app gera uma chave aleatória para a execução atual; ao reiniciar, as sessões são invalidadas e será necessário entrar novamente. Para manter sessões entre reinicializações, defina essa variável no ambiente.

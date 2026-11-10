@@ -2,8 +2,15 @@
 
 import os
 import secrets
-from datetime import date
+import hashlib
+import smtplib
+from datetime import date, datetime, timedelta, timezone
+from email.message import EmailMessage
 
+from dotenv import load_dotenv
+
+# Carrega as configurações locais do arquivo .env, se existir.
+load_dotenv()
 
 from flask import (
     Flask,
@@ -15,6 +22,7 @@ from flask import (
     abort,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
+from database.conexao import obter_conexao
 
 from models.usuarios import Usuario
 from models.cursos import Curso
@@ -233,6 +241,141 @@ def pagina_login():
     session["usuario_id"] = usuario.id
     return redirect(destino_usuario(usuario))
 
+
+# Recuperação de senha: tokens aleatórios, armazenados apenas como hash e de uso único.
+TEMPO_TOKEN_RECUPERACAO_MINUTOS = 30
+_ultimas_solicitacoes_recuperacao = {}
+
+def _hash_token_recuperacao(token):
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+def _enviar_email_recuperacao(destinatario, link):
+    """Envia por SMTP quando configurado; no modo local, registra o link no terminal."""
+    host = os.environ.get("MYFLOW_SMTP_HOST")
+    if not host:
+        print(f"\n[MyFlow] Link de recuperação de senha para {destinatario}:\n{link}\n")
+        return
+
+    mensagem = EmailMessage()
+    mensagem["Subject"] = "Redefinição de senha — MyFlow"
+    mensagem["From"] = os.environ.get("MYFLOW_SMTP_FROM", os.environ.get("MYFLOW_SMTP_USER", "no-reply@myflow.local"))
+    mensagem["To"] = destinatario
+    mensagem.set_content(
+        "Recebemos uma solicitação para redefinir a senha da sua conta MyFlow.\n\n"
+        f"Acesse este link em até {TEMPO_TOKEN_RECUPERACAO_MINUTOS} minutos:\n{link}\n\n"
+        "Se você não solicitou a alteração, ignore esta mensagem."
+    )
+    porta = int(os.environ.get("MYFLOW_SMTP_PORT", "587"))
+    usuario_smtp = os.environ.get("MYFLOW_SMTP_USER")
+    senha_smtp = os.environ.get("MYFLOW_SMTP_PASSWORD")
+    with smtplib.SMTP(host, porta, timeout=15) as servidor:
+        if os.environ.get("MYFLOW_SMTP_STARTTLS", "1") == "1":
+            servidor.starttls()
+        if usuario_smtp and senha_smtp:
+            servidor.login(usuario_smtp, senha_smtp)
+        servidor.send_message(mensagem)
+
+@app.route("/esqueci-senha", methods=["GET", "POST"])
+def pagina_esqueci_senha():
+    """Solicita um link de redefinição sem revelar se o e-mail está cadastrado."""
+    if request.method == "GET":
+        return render_template("esqueci_senha.html", erro=None, sucesso=None, email="")
+
+    email = request.form.get("email", "").strip()
+    mensagem = (
+        "Se o e-mail estiver cadastrado, enviaremos as instruções para redefinir a senha. "
+        "Confira sua caixa de entrada."
+    )
+    agora = datetime.now(timezone.utc)
+    chave_email = email.casefold()
+    ultima = _ultimas_solicitacoes_recuperacao.get(chave_email)
+    if email and (ultima is None or agora - ultima >= timedelta(minutes=2)):
+        usuario = UsuarioRepository().buscar_por_email(email)
+        if usuario is not None:
+            token = secrets.token_urlsafe(32)
+            hash_token = _hash_token_recuperacao(token)
+            conexao = obter_conexao()
+            try:
+                conexao.execute(
+                    "DELETE FROM tokens_recuperacao_senha WHERE usuario_id = ?",
+                    (usuario.id,),
+                )
+                conexao.execute(
+                    "INSERT INTO tokens_recuperacao_senha (usuario_id, token_hash, expira_em) VALUES (?, ?, ?)",
+                    (usuario.id, hash_token, (agora + timedelta(minutes=TEMPO_TOKEN_RECUPERACAO_MINUTOS)).isoformat()),
+                )
+                conexao.commit()
+            finally:
+                conexao.close()
+            link = url_for("pagina_redefinir_senha", token=token, _external=True)
+            try:
+                _enviar_email_recuperacao(usuario.email, link)
+            except Exception:
+                app.logger.exception("Não foi possível enviar o e-mail de recuperação do MyFlow.")
+        _ultimas_solicitacoes_recuperacao[chave_email] = agora
+
+    return render_template("esqueci_senha.html", erro=None, sucesso=mensagem, email=email)
+
+@app.route("/redefinir-senha/<token>", methods=["GET", "POST"])
+def pagina_redefinir_senha(token):
+    """Valida token de uso único e permite cadastrar uma nova senha."""
+    hash_token = _hash_token_recuperacao(token)
+    conexao = obter_conexao()
+    try:
+        registro = conexao.execute(
+            "SELECT id, usuario_id, expira_em FROM tokens_recuperacao_senha "
+            "WHERE token_hash = ? AND utilizado_em IS NULL",
+            (hash_token,),
+        ).fetchone()
+    finally:
+        conexao.close()
+
+    agora = datetime.now(timezone.utc)
+    valido = False
+    if registro is not None:
+        try:
+            valido = datetime.fromisoformat(registro["expira_em"]) > agora
+        except (TypeError, ValueError):
+            valido = False
+    if not valido:
+        return render_template(
+            "redefinir_senha.html", token=token, erro=(
+                "Este link é inválido, já foi utilizado ou expirou. Solicite uma nova recuperação."
+            ), sucesso=None,
+        ), 400
+
+    if request.method == "GET":
+        return render_template("redefinir_senha.html", token=token, erro=None, sucesso=None)
+
+    senha = request.form.get("nova_senha", "")
+    confirmacao = request.form.get("confirmar_senha", "")
+    if len(senha) < 8:
+        return render_template("redefinir_senha.html", token=token, erro="A senha deve ter pelo menos 8 caracteres.", sucesso=None), 400
+    if senha != confirmacao:
+        return render_template("redefinir_senha.html", token=token, erro="A nova senha e a confirmação não coincidem.", sucesso=None), 400
+
+    conexao = obter_conexao()
+    try:
+        cursor = conexao.execute(
+            "UPDATE usuarios SET senha_hash = ? WHERE id = ?",
+            (generate_password_hash(senha), registro["usuario_id"]),
+        )
+        if cursor.rowcount != 1:
+            conexao.rollback()
+            return render_template("redefinir_senha.html", token=token, erro="Não foi possível atualizar a senha. Solicite um novo link.", sucesso=None), 400
+        conexao.execute(
+            "UPDATE tokens_recuperacao_senha SET utilizado_em = ? WHERE id = ? AND utilizado_em IS NULL",
+            (agora.isoformat(), registro["id"]),
+        )
+        conexao.execute(
+            "DELETE FROM tokens_recuperacao_senha WHERE usuario_id = ? AND id != ?",
+            (registro["usuario_id"], registro["id"]),
+        )
+        conexao.commit()
+    finally:
+        conexao.close()
+
+    return render_template("redefinir_senha.html", token=token, erro=None, sucesso="Senha alterada com sucesso! Agora você já pode entrar no MyFlow com a nova senha." )
 
 @app.route("/sair", methods=["POST"])
 def sair():
