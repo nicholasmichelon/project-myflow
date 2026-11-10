@@ -1,85 +1,63 @@
 ---
 title: Instalação e execução local
 sidebar_position: 1
-description: Como preparar Python, iniciar Flask e executar o portal Docusaurus.
+description: Executar MyFlow Flask e Docusaurus em ambientes separados.
 ---
 
 # Instalação e execução local
 
-Este repositório reúne duas partes independentes: a aplicação Flask e o portal de documentação Docusaurus. É possível executar a aplicação sem instalar Node.js; Node é necessário somente para editar ou executar o portal.
+O repositório contém **duas aplicações independentes**: o MyFlow em Flask e o portal de documentação em Docusaurus.
 
-## Requisitos
+## 1. Requisitos
 
-| Ferramenta | Requisito | Para quê |
-|---|---|---|
-| Python | 3.10 ou superior | Aplicação Flask e scripts de banco |
-| pip | Incluído na instalação usual do Python | Instalar bibliotecas Python |
-| Node.js | 20 ou superior | Executar Docusaurus |
-| npm | Incluído com Node.js | Instalar pacotes do portal |
+| Ferramenta | Uso |
+|---|---|
+| Python 3.10+ | Aplicação Flask e testes |
+| pip e venv | Dependências Python |
+| Node.js compatível com Docusaurus 3.10.2 | Site de documentação |
+| npm | Dependências e build Docusaurus |
 
-## 1. Executar a aplicação Flask no Windows
+## 2. Aplicação Flask (Windows PowerShell)
 
-Abra o VS Code na pasta raiz do projeto, onde está `app.py`, e execute no PowerShell:
+Abra o terminal na raiz, onde está `app.py`:
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 python app.py
 ```
 
-Abra [http://127.0.0.1:5000](http://127.0.0.1:5000). O comando `python app.py` chama `inicializar_banco()` antes de iniciar o servidor e cria o banco quando necessário.
+Abra `http://127.0.0.1:5000`. A primeira inicialização cria as tabelas presentes em `database/schema.sql` e aplica algumas migrações de compatibilidade. **Não sobrescreva `database/banco.db`** caso já tenha dados. O código no ZIP inicia com `debug=True`; execute apenas localmente e consulte [Segurança](../reference/seguranca-e-limitacoes.md).
 
-### Linux ou macOS
+## 3. Portal Docusaurus
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python app.py
-```
-
-## 2. Banco de dados
-
-O aplicativo cria ou atualiza o schema em `database/banco.db` quando é iniciado pela entrada `app.py`. A estrutura de tabelas está documentada em [Banco de dados](../architecture/banco-de-dados.md).
-
-:::warning Faça backup antes de migrar
-Se você está atualizando uma instalação antiga, copie `database/banco.db` para um local seguro antes de executar migrações. Não apague o banco original para resolver um erro sem antes verificar se ele contém dados que precisam ser preservados.
-:::
-
-Se o banco antigo tiver uma restrição `UNIQUE` isolada em `usuarios.curso_id` — que impede vários usuários de compartilhar um curso — e a migração ainda não tiver sido feita, execute uma vez:
+Em outro terminal, dentro de `website`:
 
 ```powershell
-python database\corrigir_banco.py
-```
-
-O script informa quando nenhuma alteração é necessária. Não o execute repetidamente como parte do uso normal.
-
-## 3. Executar o Docusaurus
-
-Em outro terminal, a partir da raiz do projeto:
-
-```powershell
-cd website
-npm install
+npm ci
 npm run start
 ```
 
-O portal abrirá em [http://localhost:3000](http://localhost:3000). Se o navegador não abrir automaticamente, acesse esse endereço manualmente.
-
-Para validar a versão de produção estática:
+Abra o endereço indicado no terminal (normalmente `http://localhost:3000`). Para validar o site em modo de produção:
 
 ```powershell
 npm run build
 npm run serve
 ```
 
-O comando `build` gera os arquivos estáticos na pasta `website/build/`.
+O portal não exige que o servidor Flask esteja ligado, pois é um site de documentação estática.
 
-## Observações
+## 4. Executar testes Python
 
-- O banco `database/banco.db` é local e fica fora do controle de versão. O arquivo não deve ser compartilhado com a documentação.
-- O diretório `.venv/`, `node_modules/`, caches Python e a pasta `website/build/` são gerados localmente.
-- Se a instalação do Docusaurus falhar, confirme `node --version` (20+) e `npm --version`, e tente novamente com acesso à rede habilitado.
+Na raiz do projeto:
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+Os testes disponíveis em `tests/test_tarefas.py` usam SQLite temporário e cobrem tarefas, isolamento entre usuários e sugestão por tempo disponível. Não constituem cobertura integral dos formulários web ou do fluxo de recuperação de senha.
+
+:::warning Atenção ao banco local
+O ZIP original contém `database/banco.db`, mas ele não deve ser redistribuído. O pacote atualizado fornecido com a documentação exclui o banco local. As rotas de redefinição consultam uma tabela que não é criada pelo schema desta versão.
+:::

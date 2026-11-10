@@ -1,76 +1,47 @@
 ---
 title: Banco de dados e migrações
-sidebar_position: 4
-description: Tabelas, chaves, restrições e inicialização do SQLite.
+sidebar_position: 1
+description: Tabelas, integridade e lacunas do schema SQLite.
 ---
 
 # Banco de dados e migrações
 
-A persistência é feita em SQLite. `database/conexao.py` define o caminho `database/banco.db`, abre conexões, configura `sqlite3.Row` e ativa `PRAGMA foreign_keys = ON` em cada conexão.
+O SQLite é configurado em `database/conexao.py`; conexões possuem `row_factory=sqlite3.Row` e `PRAGMA foreign_keys = ON`. O arquivo físico é `database/banco.db`.
 
-## Tabelas
+## Schema presente no anexo
 
-| Tabela | Conteúdo | Restrições importantes |
+| Tabela | Dados principais | Regras |
 |---|---|---|
-| `usuarios` | Perfil, e-mail, tempo disponível, hash da senha e `curso_id` | E-mail único sem diferenciar maiúsculas/minúsculas; tempo maior que zero; referência opcional a `cursos` |
-| `cursos` | Nome e nível do curso | Nome único sem diferenciar maiúsculas/minúsculas |
-| `disciplinas` | Nome, código, carga horária e `curso_id` | Carga horária maior que zero; código único dentro do mesmo curso |
-| `progresso_disciplinas` | Conclusão individual | Chave primária composta `(usuario_id, disciplina_id)`; conclusão 0 ou 1 |
-| `schema_migrations` | Controle de migrações aplicadas | `versao` como chave primária |
+| `usuarios` | Perfil, e-mail, `senha_hash`, `is_owner`, `curso_id` | E-mail único, tempo positivo, papel booleano |
+| `cursos` | Nome, nível | Nome único sem diferenciar capitalização |
+| `disciplinas` | `curso_id`, código, nome, carga horária | Código único por curso, horas positivas |
+| `progresso_disciplinas` | `usuario_id`, `disciplina_id`, `concluida` | PK composta, exclusão em cascata |
+| `tarefas` | `usuario_id`, `disciplina_id`, título, prazo, prioridade, duração, conclusão | Tarefa pertencente a usuário, disciplina opcional |
+| `schema_migrations` | Versões de migração | Rastreia migrações realizadas |
 
-## Relações
+## Relacionamentos
 
 ```mermaid
 erDiagram
-    CURSOS ||--o{ DISCIPLINAS : organiza
-    CURSOS ||--o{ USUARIOS : associado_a
-    USUARIOS ||--o{ PROGRESSO_DISCIPLINAS : possui
-    DISCIPLINAS ||--o{ PROGRESSO_DISCIPLINAS : recebe
-    USUARIOS {
-      integer id PK
-      text nome
-      text email UK
-      text jornada
-      text objetivo
-      integer tempo_disponivel
-      integer curso_id FK
-      text senha_hash
-    }
-    CURSOS {
-      integer id PK
-      text nome UK
-      text nivel
-    }
-    DISCIPLINAS {
-      integer id PK
-      integer curso_id FK
-      text nome
-      text codigo
-      integer carga_horaria
-    }
-    PROGRESSO_DISCIPLINAS {
-      integer usuario_id PK, FK
-      integer disciplina_id PK, FK
-      integer concluida
-      text atualizado_em
-    }
+  CURSOS ||--o{ USUARIOS : "associacao opcional no usuario"
+  CURSOS ||--o{ DISCIPLINAS : "catalogo"
+  USUARIOS ||--o{ PROGRESSO_DISCIPLINAS : "estado pessoal"
+  DISCIPLINAS ||--o{ PROGRESSO_DISCIPLINAS : "recebe estado"
+  USUARIOS ||--o{ TAREFAS : "cria"
+  DISCIPLINAS o|--o{ TAREFAS : "vinculo opcional"
 ```
 
-## Integridade e exclusão
+## Integridade
 
-- `disciplinas.curso_id` referencia `cursos.id` com `ON DELETE SET NULL`.
-- `usuarios.curso_id` referencia `cursos.id` com `ON DELETE SET NULL`.
-- `progresso_disciplinas.usuario_id` e `disciplina_id` usam `ON DELETE CASCADE`.
-- A aplicação cria um índice para `disciplinas.curso_id` e outro para `progresso_disciplinas.disciplina_id`.
+- `usuarios.curso_id` e `disciplinas.curso_id`: `ON DELETE SET NULL`.
+- `progresso_disciplinas.usuario_id` e `disciplina_id`: `ON DELETE CASCADE`.
+- `tarefas.usuario_id`: `ON DELETE CASCADE`; `tarefas.disciplina_id`: `ON DELETE SET NULL`.
+- `prioridade` admite somente `alta`, `media`, `baixa`; duração de tarefa deve ser maior que zero.
 
-## Inicialização automática
+## Inicialização e migrações
 
-A função `inicializar_banco()` executa `schema.sql`, acrescenta `senha_hash` em bases antigas quando necessário e executa a migração única `progresso_individual_v1`. Se o campo legado `disciplinas.concluida` existir, seu estado é copiado para os usuários já associados ao curso.
+`inicializar_banco()` executa `database/schema.sql`, migra atributos antigos (`senha_hash`, `is_owner`) e preserva estados anteriores de disciplina ao passar para o progresso individual (migração `progresso_individual_v1`). Há um script separado `database/corrigir_banco.py` para a restrição legada de curso único por usuário.
 
-## Migração específica `corrigir_banco.py`
-
-O script verifica se o banco antigo possui uma restrição `UNIQUE` isolada na coluna `usuarios.curso_id`. Se possuir, recria a tabela preservando IDs e dados, para permitir que vários usuários compartilhem o mesmo curso. Ele deve ser executado somente quando necessário e após backup.
-
-:::warning Dados locais
-`database/banco.db` pode conter dados reais de desenvolvimento. Ele é ignorado pelo Git e deve ficar fora dos pacotes de documentação. Não apague nem substitua esse arquivo antes de fazer uma cópia de segurança.
+:::danger Tabela de tokens ausente
+A aplicação consulta `tokens_recuperacao_senha` nas rotas `/esqueci-senha` e `/redefinir-senha/<token>`, mas o `database/schema.sql` **não contém um CREATE TABLE para ela** e `inicializar_banco()` também não a cria. Uma instalação nova não terá a tabela e essas rotas não completarão o fluxo. Corrija schema e migração antes de validar essa funcionalidade; faça backup antes de alterações no banco.
 :::

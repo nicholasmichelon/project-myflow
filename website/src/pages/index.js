@@ -15,15 +15,17 @@ function BrandMark() {
 }
 
 const areas = [
-  { number: '01', title: 'Produto e escopo', text: 'Entenda o que a versão atual faz, como o usuário percorre as etapas e quais ideias continuam no roadmap.', to: '/docs/product/visao-geral', label: 'Conhecer o produto' },
-  { number: '02', title: 'Primeiros passos', text: 'Prepare Python, instale as dependências e execute o aplicativo localmente no VS Code.', to: '/docs/getting-started/instalacao', label: 'Ver instalação' },
-  { number: '03', title: 'Arquitetura técnica', text: 'Explore modelos, repositórios, rotas Flask e o schema que sustenta os dados.', to: '/docs/architecture/arquitetura', label: 'Explorar arquitetura' },
-  { number: '04', title: 'Diagramas UML', text: 'Consulte os diagramas de classes e sequência e baixe seus arquivos PlantUML originais.', to: '/docs/reference/uml', label: 'Abrir diagramas' },
+  { number: '01', title: 'Produto e jornada', text: 'Conheça o MyFlow, a organização de cursos e o progresso individual de cada usuário.', to: '/docs/product/visao-geral', label: 'Conhecer o produto' },
+  { number: '02', title: 'Dashboard e tarefas', text: 'Explore os indicadores, o controle de atividades e a gestão de prioridades.', to: '/docs/guides/tarefas', label: 'Ver tarefas' },
+  { number: '03', title: 'Próxima ação', text: 'Entenda como o sistema recomenda uma tarefa conforme o tempo disponível.', to: '/docs/guides/sugestor', label: 'Explorar o algoritmo' },
+  { number: '04', title: 'Contas e permissões', text: 'Documentação de perfil, login, proprietários e redefinição de senha.', to: '/docs/guides/administracao', label: 'Ver gestão de contas' },
+  { number: '05', title: 'Arquitetura técnica', text: 'Modelos, repositórios, rotas Flask e estrutura do banco SQLite.', to: '/docs/architecture/arquitetura', label: 'Explorar arquitetura' },
+  { number: '06', title: 'UML e execução', text: 'Diagramas atualizados, instalação e diretrizes de manutenção do projeto.', to: '/docs/reference/uml', label: 'Abrir diagramas' },
 ];
 
 function PreviewPanel() {
   return (
-    <div className={styles.previewWrap} aria-label="Ilustração de uma tela do MyFlow">
+    <div className={styles.previewWrap} aria-label="Prévia ilustrativa de um painel do MyFlow; dados fictícios">
       <div className={styles.orbitOne} />
       <div className={styles.orbitTwo} />
       <div className={styles.previewCard}>
@@ -31,26 +33,26 @@ function PreviewPanel() {
           <div className={styles.previewBrand}><span className={styles.previewBrandIcon}><BrandMark /></span><span>myflow</span></div>
           <span className={styles.previewAvatar}>N</span>
         </div>
-        <div className={styles.previewHeading}>Seu fluxo de aprendizagem</div>
+        <div className={styles.previewHeading}>Seu painel de estudos</div>
         <div className={styles.previewSubheading}>Graduação · Negócios Digitais</div>
         <div className={styles.progressBlock}>
           <div className={styles.progressMeta}><span>Progresso do curso</span><strong>68%</strong></div>
           <div className={styles.progressTrack}><span /></div>
         </div>
-        <div className={styles.previewSectionLabel}>Suas disciplinas</div>
+        <div className={styles.previewSectionLabel}>PRÓXIMAS ATIVIDADES</div>
         <div className={styles.previewTask}>
           <span className={`${styles.taskIcon} ${styles.taskIconDone}`}>✓</span>
-          <span className={styles.taskCopy}><strong>Fundamentos de Marketing</strong><small>Concluída</small></span>
+          <span className={styles.taskCopy}><strong>Revisar Marketing</strong><small>Tarefa concluída</small></span>
           <span className={styles.taskStatus}>Feito</span>
         </div>
         <div className={styles.previewTask}>
           <span className={`${styles.taskIcon} ${styles.taskIconActive}`}>↗</span>
-          <span className={styles.taskCopy}><strong>Programação Orientada a Objetos</strong><small>Em andamento</small></span>
+          <span className={styles.taskCopy}><strong>Entregar atividade de POO</strong><small>Alta prioridade</small></span>
           <span className={styles.taskDot} />
         </div>
         <div className={styles.previewTask}>
           <span className={`${styles.taskIcon} ${styles.taskIconPending}`}>○</span>
-          <span className={styles.taskCopy}><strong>Experiência do Usuário</strong><small>Pendente</small></span>
+          <span className={styles.taskCopy}><strong>Ler material de UX</strong><small>Estimativa: 20 min</small></span>
           <span className={styles.taskDot} />
         </div>
         <div className={styles.previewFoot}><span className={styles.previewFootDot} /> Uma etapa de cada vez</div>
@@ -69,7 +71,7 @@ function Home() {
             <div className={styles.heroCopy}>
               <div className={styles.eyebrow}><span className={styles.eyebrowDot} /> DOCUMENTAÇÃO DO PROJETO</div>
               <h1>Organize a jornada.<br /><span>Entenda o sistema.</span></h1>
-              <p className={styles.heroLead}>Um guia claro para conhecer, executar e evoluir o MyFlow — da primeira rota Flask ao modelo de dados.</p>
+              <p className={styles.heroLead}>Documentação funcional e técnica do MyFlow: produtividade, jornada de estudos, gestão de contas, arquitetura e UML em um só lugar.</p>
               <div className={styles.heroActions}>
                 <Link className={styles.primaryButton} to="/docs/intro">Explorar documentação <span aria-hidden="true">→</span></Link>
                 <Link className={styles.textButton} to="/docs/getting-started/instalacao">Começar pela instalação</Link>
@@ -86,15 +88,15 @@ function Home() {
         </section>
 
         <section className={styles.valueStrip} aria-label="Visão geral do portal">
-          <div className={styles.valueItem}><strong>Visão do produto</strong><span>Fluxos reais e escopo atual</span></div>
-          <div className={styles.valueItem}><strong>Referência técnica</strong><span>Modelos, repositórios e banco</span></div>
-          <div className={styles.valueItem}><strong>Documentação visual</strong><span>Diagramas e guias navegáveis</span></div>
+          <div className={styles.valueItem}><strong>Visão do produto</strong><span>Jornada, tarefas e agenda</span></div>
+          <div className={styles.valueItem}><strong>Referência técnica</strong><span>Contas, rotas e dados</span></div>
+          <div className={styles.valueItem}><strong>Documentação visual</strong><span>UML e orientações de uso</span></div>
         </section>
 
         <section className={styles.section}>
           <div className={styles.sectionIntro}>
-            <div><span className={styles.sectionEyebrow}>NAVEGUE POR TEMA</span><h2>Da visão geral ao detalhe técnico</h2></div>
-            <p>Encontre o caminho certo para seu próximo passo no projeto, com conteúdo direto e organizado por responsabilidade.</p>
+            <div><span className={styles.sectionEyebrow}>NAVEGUE POR TEMA</span><h2>Tudo sobre a versão atual do MyFlow</h2></div>
+            <p>Explore guias objetivos e referências técnicas que acompanham o código real do sistema.</p>
           </div>
           <div className={styles.areaGrid}>
             {areas.map((area) => (
@@ -126,7 +128,7 @@ function Home() {
 
         <section className={styles.lastCall}>
           <div className={styles.lastCallMark}><BrandMark /></div>
-          <div><h2>Pronto para começar?</h2><p>Configure o ambiente e rode o projeto localmente.</p></div>
+          <div><h2>Pronto para começar?</h2><p>Execute a aplicação e consulte os guias atualizados.</p></div>
           <Link className={styles.primaryButton} to="/docs/getting-started/instalacao">Ver guia de instalação <span aria-hidden="true">→</span></Link>
         </section>
       </main>

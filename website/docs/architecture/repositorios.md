@@ -1,73 +1,44 @@
 ---
 title: Repositórios
-sidebar_position: 3
-description: Operações de persistência e retorno das classes em repository/.
+sidebar_position: 1
+description: Persistência SQLite e operações CRUD por entidade.
 ---
 
 # Repositórios
 
-Os repositórios encapsulam o acesso ao SQLite. Eles transformam linhas do banco em objetos, executam consultas e controlam `commit`, `rollback` e fechamento de conexão.
+O diretório `repository/` organiza a persistência em cinco classes. As operações de leitura devolvem objetos de domínio e as alterações executam SQL parametrizado.
 
 ## `UsuarioRepository`
 
-Arquivo: `repository/usuarios_repository.py`.
-
-| Método | Resultado / uso |
-|---|---|
-| `inserir(usuario)` | Insere usuário e devolve o ID; o objeto recebe o ID gerado |
-| `listar_todos()` | Lista objetos `Usuario` |
-| `buscar_por_id(id_usuario)` | Retorna `Usuario` ou `None` |
-| `buscar_por_email(email)` | Retorna `Usuario` ou `None` |
-| `atualizar(usuario)` | Retorna `True` se uma linha foi atualizada; `False` caso contrário |
-| `excluir(id_usuario)` | Retorna `True` quando exclui uma linha |
-
-O repositório resolve o ID do curso associado e carrega os dados do curso quando reconstrói um usuário. Erros de integridade são convertidos em `ValueError` nas operações de escrita.
+`inserir`, `listar_todos`, `buscar_por_id`, `buscar_por_email`, `atualizar`, `excluir`, `contar_proprietarios`, `definir_proprietario` e `listar_para_administracao`. Gerencia o vínculo `curso_id`, os hashes de senha e o papel `is_owner`.
 
 ## `CursoRepository`
 
-Arquivo: `repository/cursos_repository.py`.
-
-| Método | Resultado / uso |
-|---|---|
-| `inserir(curso)` | Salva o curso e disciplinas presentes na mesma transação; retorna o ID do curso |
-| `listar_todos()` | Lista cursos com suas disciplinas carregadas |
-| `buscar_por_id(id_curso)` | Retorna `Curso` ou `None` |
-| `buscar_por_nome(nome)` | Busca nome sem diferenciar capitalização, inclusive com suporte a letras acentuadas pela comparação em Python |
-| `atualizar(curso)` | Atualiza o curso e sincroniza sua lista de disciplinas; retorna booleano |
-| `excluir(id_curso)` | Exclui o curso e retorna booleano |
-
-Ao atualizar a lista de disciplinas, as disciplinas removidas da lista do objeto ficam sem vínculo com o curso (`curso_id = NULL`), em vez de serem apagadas. As operações compostas usam transação. Os IDs de novas disciplinas são atribuídos aos objetos depois do `commit`.
+`inserir`, `listar_todos`, `buscar_por_id`, `buscar_por_nome`, `atualizar`, `excluir`. Salva cursos e sincroniza as disciplinas vinculadas, usando transações nas operações compostas.
 
 ## `DisciplinaRepository`
 
-Arquivo: `repository/disciplinas_repository.py`.
-
-| Método | Resultado / uso |
-|---|---|
-| `inserir(disciplina, curso_id=None)` | Insere disciplina e devolve seu ID |
-| `listar_todos()` | Lista todas as disciplinas |
-| `listar_por_curso(id_curso)` | Lista disciplinas de um curso |
-| `buscar_por_id(id_disciplina)` | Retorna `Disciplina` ou `None` |
-| `buscar_por_codigo(codigo, curso_id=None)` | Busca pelo código, opcionalmente dentro de um curso |
-| `atualizar(disciplina)` | Atualiza dados da disciplina e retorna booleano |
-| `excluir(id_disciplina)` | Exclui e retorna booleano |
-
-O vínculo de uma disciplina ao curso é gerenciado principalmente por `CursoRepository`. O código da disciplina é único dentro do curso conforme a restrição composta do banco.
+`inserir`, `listar_todos`, `listar_por_curso`, `buscar_por_id`, `buscar_por_codigo`, `atualizar` e `excluir`. Respeita o código da disciplina dentro do curso.
 
 ## `ProgressoDisciplinaRepository`
 
-Arquivo: `repository/progresso_disciplina_repository.py`.
+`buscar`, `listar_status_do_curso`, `salvar`, `calcular_progresso`. Persiste a conclusão pelo par `(usuario_id, disciplina_id)`.
 
-| Método | Resultado / uso |
+## `TarefaRepository`
+
+| Método | Responsabilidade |
 |---|---|
-| `buscar(usuario_id, disciplina_id)` | Retorna o progresso ou `None` |
-| `listar_status_do_curso(usuario_id, curso_id)` | Retorna um dicionário `{disciplina_id: bool}`; ausências são tratadas como pendentes |
-| `salvar(progresso)` | Valida o vínculo usuário-curso-disciplina e insere/atualiza o estado |
-| `calcular_progresso(usuario_id, curso_id)` | Retorna percentual de conclusão (`float`) |
+| `criar(tarefa)` | Insere tarefa pessoal com validação opcional da disciplina |
+| `listar_do_usuario(usuario_id, incluir_concluidas=True)` | Devolve tarefas do usuário, ordenadas para exibição |
+| `buscar_por_id(tarefa_id, usuario_id)` | Consulta uma tarefa do próprio usuário |
+| `atualizar(tarefa)` | Altera campos usando ID e proprietário |
+| `excluir(tarefa_id, usuario_id)` | Remove tarefa do proprietário |
+| `resumo_do_usuario(usuario_id)` | Retorna contagem total, concluídas e pendentes |
 
-## Convenções importantes
+:::info Diferença importante
+`TarefaRepository.listar_do_usuario()` define a **ordem de exibição**, enquanto `SugestorDeTarefas` define a **ordem de recomendação**; são lógicas distintas. A sugestão é feita sobre objetos `Tarefa` depois da consulta.
+:::
 
-- Os valores de usuário entram nas consultas SQL por parâmetros, não por concatenação da string SQL.
-- Os métodos de consulta fecham conexões mesmo em caso de erro (`finally`).
-- O modelo cuida da validação do objeto; o repositório cuida do armazenamento e de regras que dependem do banco.
-- `ValueError` comunica dados rejeitados ou conflitos de integridade em operações de escrita.
+### Isolamento de dados
+
+A alteração e a exclusão de tarefas dependem de `usuario_id`; a associação a uma disciplina só é aceita quando ela pertence ao curso do titular. O catálogo de cursos e disciplinas continua compartilhado.

@@ -1,40 +1,46 @@
 ---
-title: Configuração e variáveis de ambiente
-sidebar_position: 2
-description: Configurações disponíveis para execução local do MyFlow.
+title: Configuração e ambiente
+sidebar_position: 1
+description: Variáveis de ambiente e execução segura no desenvolvimento.
 ---
 
-# Configuração e variáveis de ambiente
+# Configuração e ambiente
 
-A aplicação consulta duas variáveis de ambiente no `app.py`. Elas são lidas diretamente pelo Python; o projeto não declara uma biblioteca para carregar automaticamente um arquivo `.env`.
+O `app.py` usa `python-dotenv` e chama `load_dotenv()` na inicialização. Assim, configurações podem vir do ambiente ou de um `.env` criado manualmente na raiz do projeto. **O anexo não inclui `.env.example`**, apesar da menção no guia de administração.
 
-## `MYFLOW_SECRET_KEY`
+## Variáveis reconhecidas
 
-Usada pelo Flask para assinar a sessão do navegador. O código contém um valor padrão destinado apenas ao desenvolvimento local. Para definir uma chave no PowerShell antes de iniciar a aplicação:
+| Variável | Função | Comportamento sem configuração |
+|---|---|---|
+| `MYFLOW_SECRET_KEY` | Assina sessões Flask | Chave aleatória por processo; reiniciar invalida sessões |
+| `MYFLOW_OWNER_SETUP_TOKEN` | Token de ativação do primeiro proprietário | Token aleatório exibido no terminal se ainda não houver proprietário |
+| `MYFLOW_SMTP_HOST` | Servidor SMTP de recuperação | Link de redefinição é mostrado no terminal |
+| `MYFLOW_SMTP_PORT` | Porta do servidor SMTP | `587` |
+| `MYFLOW_SMTP_USER` | Usuário SMTP | Autenticação somente se usuário/senha informados |
+| `MYFLOW_SMTP_PASSWORD` | Senha SMTP | Não definida |
+| `MYFLOW_SMTP_FROM` | Remetente do e-mail | SMTP user ou fallback local |
+| `MYFLOW_SMTP_STARTTLS` | Ativa STARTTLS quando `1` | `1` |
 
-```powershell
-$env:MYFLOW_SECRET_KEY = "troque-por-uma-chave-local-segura"
-python app.py
+Exemplo **sem segredos reais** para criar manualmente o arquivo `.env`:
+
+```dotenv
+MYFLOW_SECRET_KEY=SUBSTITUA_POR_VALOR_SEGURO
+MYFLOW_OWNER_SETUP_TOKEN=SUBSTITUA_POR_TOKEN_ALEATORIO
+# Configure somente ao testar e-mail:
+# MYFLOW_SMTP_HOST=smtp.exemplo.com
+# MYFLOW_SMTP_PORT=587
+# MYFLOW_SMTP_USER=usuario@example.com
+# MYFLOW_SMTP_PASSWORD=SENHA_ESPECIFICA_DO_SERVICO
+# MYFLOW_SMTP_FROM=usuario@example.com
+# MYFLOW_SMTP_STARTTLS=1
 ```
 
-Defina o valor real fora do código-fonte e não o publique em documentação, Git ou mensagens. O exemplo acima é um marcador ilustrativo, não uma chave pronta para produção.
+**Não publique `.env` e nunca copie valores reais para a documentação.**
 
-## `MYFLOW_DEBUG`
+## Modo de depuração
 
-O modo de depuração é desativado por padrão. Para ativá-lo temporariamente durante o desenvolvimento local:
+O arquivo **atual** termina com `app.run(debug=True, use_reloader=False)`. Portanto, o modo debug está ligado no código recebido. A variável `MYFLOW_DEBUG` mencionada na documentação anterior **não é lida** pelo `app.py` atual; defini-la não desativa a depuração. Antes de implantar a aplicação, corrija esse ponto no código e faça revisão de segurança.
 
-```powershell
-$env:MYFLOW_DEBUG = "1"
-python app.py
-```
+## Dependências
 
-Feche o terminal ou remova a variável após o teste. Não publique a aplicação com o modo de depuração ligado.
-
-## Dependências Python
-
-O arquivo `requirements.txt` declara:
-
-- `Flask` — rotas, sessão e renderização de templates;
-- `Werkzeug` — funções para gerar e verificar hash de senha.
-
-SQLite faz parte da biblioteca padrão do Python usada pelo projeto. As dependências Node do Docusaurus ficam isoladas em `website/package.json`.
+`requirements.txt` lista Flask, Werkzeug e `python-dotenv`; `website/package.json` controla as dependências Node do Docusaurus, incluindo o tema Mermaid.

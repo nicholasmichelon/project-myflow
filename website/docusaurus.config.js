@@ -21,10 +21,10 @@ const config = {
       'classic',
       {
         docs: {
-              sidebarPath: './sidebars.js',
-              routeBasePath: 'docs',
-              showLastUpdateTime: false,
-              },
+          sidebarPath: './sidebars.js',
+          routeBasePath: 'docs',
+          showLastUpdateTime: false,
+        },
         blog: false,
         pages: {},
         theme: {
@@ -70,13 +70,13 @@ const config = {
           position: 'left',
         },
         {
-          to: '/docs/architecture/arquitetura',
-          label: 'Arquitetura',
+          to: '/docs/guides/tarefas',
+          label: 'Tarefas',
           position: 'left',
         },
         {
-          to: '/docs/getting-started/instalacao',
-          label: 'Instalação',
+          to: '/docs/architecture/arquitetura',
+          label: 'Arquitetura',
           position: 'left',
         },
       ],
@@ -113,10 +113,14 @@ const config = {
               label: 'Diagramas UML',
               to: '/docs/reference/uml',
             },
+            {
+              label: 'Tarefas e agenda',
+              to: '/docs/guides/tarefas',
+            },
           ],
         },
       ],
-      copyright: 'MyFlow · Documentação do projeto acadêmico',
+      copyright: 'MyFlow · Documentação técnica e funcional',
     },
 
     prism: {

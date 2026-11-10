@@ -1,39 +1,31 @@
 ---
 title: Cadastro, login e sessão
-sidebar_position: 2
-description: Regras atuais de autenticação, hash de senha e encerramento de sessão.
+sidebar_position: 1
+description: Autenticação, CSRF e recuperação de credenciais.
 ---
 
 # Cadastro, login e sessão
 
-A autenticação é implementada nas rotas `/` (cadastro), `/login` e `/sair`. O estado de autenticação é mantido por uma sessão Flask, identificada pela chave `usuario_id`.
+A autenticação usa sessão Flask em `session['usuario_id']` e senhas verificadas com funções de `werkzeug.security`.
 
-## Cadastro
+## Cadastro (`GET/POST /`)
 
-- O campo de senha deve ter pelo menos oito caracteres.
-- A confirmação precisa coincidir com a senha.
-- O e-mail é obrigatório e precisa conter `@` segundo a validação da classe `Usuario`; o banco também impõe unicidade sem diferenciar maiúsculas/minúsculas.
-- A senha é transformada com `generate_password_hash()` antes de persistir. O texto puro não é armazenado.
-- Após sucesso, a sessão é limpa e recriada para o novo usuário.
+A pessoa informa nome, e-mail, jornada, objetivo, tempo disponível, senha e confirmação. A senha exige **oito caracteres ou mais**. O e-mail é único no banco; o modelo exige um valor não vazio contendo `@`. Após o cadastro, o sistema registra a sessão e redireciona para o curso.
 
-## Login
+## Login (`GET/POST /login`)
 
-A aplicação localiza a conta pelo e-mail e verifica a senha com `check_password_hash()`. Usuário inexistente e senha incorreta recebem a mensagem genérica “E-mail ou senha inválidos”. Contas antigas sem `senha_hash` recebem instruções para definir uma senha localmente.
+O fluxo consulta `UsuarioRepository.buscar_por_email()` e verifica a senha com `check_password_hash()`. Falhas comuns de autenticação apresentam mensagem genérica. Contas legadas sem senha cadastrada recebem orientação para definir uma senha inicial com um proprietário.
 
-## Contas antigas sem senha
+O redirecionamento após login depende do curso: `/curso` quando não existe vínculo e `/dashboard` quando existe.
 
-Execute pela raiz do projeto:
+## Proteção dos formulários
 
-```powershell
-python scripts\definir_senha_usuario.py
-```
+O app cria um token CSRF na sessão, disponibilizado aos templates pelo `context_processor`. O `before_request` exige correspondência desse token para **requisições POST**. Caso não corresponda, retorna HTTP 400. O mecanismo é simples e não substitui revisão completa de segurança.
 
-O script solicita o e-mail da conta existente e a nova senha. Use esse procedimento apenas no ambiente local e nunca compartilhe a senha em mensagens ou arquivos.
+## Saída
 
-## Sair da conta
+`POST /sair` limpa a sessão e retorna à tela de login.
 
-A rota `/sair` aceita `POST`, limpa os dados da sessão e redireciona para `/login`.
+## Recuperação e contas antigas
 
-:::warning Limitações atuais
-O projeto não implementa recuperação de senha por e-mail, proteção CSRF para formulários nem limite de tentativas de login. Isso é importante considerar antes de disponibilizar a aplicação fora de um ambiente acadêmico local. Consulte [Segurança e limitações](../reference/seguranca-e-limitacoes.md).
-:::
+As rotas de recuperação existem no `app.py`, mas dependem de uma tabela ausente do schema do anexo. Veja [Recuperação de senha](./recuperacao-senha.md). Contas legadas podem receber senha temporária na [administração](./administracao.md) ou pelo script local `scripts/definir_senha_usuario.py`.

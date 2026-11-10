@@ -1,50 +1,43 @@
 ---
-id: intro
 title: Documentação do MyFlow
-slug: /intro
 sidebar_position: 1
-description: Ponto de entrada para entender, executar e manter o projeto MyFlow.
+description: Portal oficial de referência funcional e técnica do projeto.
 ---
 
 # MyFlow, por dentro
 
-O MyFlow é um protótipo web acadêmico que permite cadastrar uma conta, associar um curso, organizar as disciplinas desse curso e acompanhar a conclusão de cada disciplina individualmente.
+O **MyFlow** organiza a jornada de estudos por meio de cursos, disciplinas, tarefas e prioridades. O portal documenta a implementação em **Python, Flask e SQLite**, incluindo o painel do usuário, a agenda, o sugestor por regras e as funcionalidades de conta.
 
-<div className="doc-callout doc-callout--blue">
-  <strong>O que esta documentação cobre</strong>
-  <p>O comportamento descrito aqui foi baseado nos arquivos do projeto anexado: aplicação Flask, modelos, repositórios, templates, schema SQLite e fontes UML. Funcionalidades planejadas mas ainda não implementadas são identificadas como tal.</p>
-</div>
-
-## Comece pelo seu objetivo
+<div className="doc-callout doc-callout--blue"><strong>Documentação baseada no código</strong><p>Atualizada para o projeto recebido em novembro de 2026. As funcionalidades existentes são diferenciadas das lacunas de implementação. O aplicativo Flask e este portal Docusaurus são sistemas independentes.</p></div>
 
 <div className="doc-link-grid">
-  <a className="doc-link-card" href="/docs/product/visao-geral"><span className="doc-link-card__eyebrow">01 · Produto</span><strong>Entender o MyFlow</strong><span>Escopo implementado, conceitos principais e limites atuais.</span></a>
-  <a className="doc-link-card" href="/docs/getting-started/instalacao"><span className="doc-link-card__eyebrow">02 · Execução</span><strong>Rodar localmente</strong><span>Ambiente Python, dependências, banco e servidor Flask.</span></a>
-  <a className="doc-link-card" href="/docs/architecture/arquitetura"><span className="doc-link-card__eyebrow">03 · Engenharia</span><strong>Conhecer a arquitetura</strong><span>Como interface, modelos, repositórios e SQLite se conectam.</span></a>
-  <a className="doc-link-card" href="/docs/reference/uml"><span className="doc-link-card__eyebrow">04 · Diagramas</span><strong>Explorar o UML</strong><span>Diagramas de classes e de sequência com os arquivos-fonte.</span></a>
+  <a className="doc-link-card" href="/docs/product/visao-geral"><span className="doc-link-card__eyebrow">01 · Produto</span><strong>Funcionalidades</strong><span>Conheça o escopo atual, os perfis e as principais telas.</span></a>
+  <a className="doc-link-card" href="/docs/guides/tarefas"><span className="doc-link-card__eyebrow">02 · Produtividade</span><strong>Tarefas e agenda</strong><span>Crie tarefas, defina prioridades e acompanhe os prazos.</span></a>
+  <a className="doc-link-card" href="/docs/getting-started/instalacao"><span className="doc-link-card__eyebrow">03 · Execução</span><strong>Executar localmente</strong><span>Inicie Flask e o portal de documentação sem misturar os ambientes.</span></a>
+  <a className="doc-link-card" href="/docs/architecture/arquitetura"><span className="doc-link-card__eyebrow">04 · Engenharia</span><strong>Arquitetura e UML</strong><span>Entenda modelos, repositórios, rotas e dados.</span></a>
 </div>
 
-## Visão rápida
+## Módulos documentados
 
-| Elemento | Tecnologia ou responsabilidade |
+| Módulo | Conteúdo |
 |---|---|
-| Aplicação web | Flask, com rotas para cadastro, login, curso e disciplinas |
-| Interface | Templates HTML/Jinja e `static/styles.css` |
-| Domínio | `Usuario`, `Curso`, `Disciplina` e `ProgressoDisciplina` |
-| Persistência | SQLite, acessado por classes de repositório |
-| Segurança de senha | Hash de senha por `werkzeug.security` |
-| Documentação | Docusaurus e Markdown/MDX |
+| Aprendizagem | Cadastro, curso compartilhado, disciplinas e progresso individual |
+| Produtividade | Dashboard, tarefas pessoais, sugestão da próxima ação e agenda |
+| Conta | Login, perfil, troca de credenciais e controle de sessão |
+| Administração | Ativação de proprietário, papéis e gerenciamento de contas |
+| Recuperação | Rotas de redefinição e configuração SMTP; **dependência de tabela ausente no schema anexado** |
 
-## Fluxo principal
+## Jornada resumida
 
 ```mermaid
 flowchart LR
-    A[Cadastro da conta] --> B[Associar ou criar curso]
-    B --> C[Adicionar disciplinas]
-    C --> D[Marcar disciplinas concluídas]
-    D --> E[Consultar progresso individual]
+    Cadastro[Cadastro e login] --> Curso[Curso e disciplinas]
+    Curso --> Painel[Dashboard]
+    Painel --> Tarefas[Tarefas e agenda]
+    Tarefas --> Sugestao[Sugestão por regras]
+    Curso --> Progresso[Progresso individual]
 ```
 
-:::info Sobre o escopo
-O projeto guarda o tempo disponível informado no cadastro, mas a versão anexada ainda não contém classes de tarefas, sessões de estudo nem um mecanismo que sugira a próxima ação. Consulte [Visão geral do produto](./product/visao-geral.md) para distinguir as funcionalidades existentes das ideias futuras.
+:::warning Antes de executar a recuperação de senha
+O código fornecido consulta a tabela `tokens_recuperacao_senha`, ausente do `database/schema.sql` fornecido. Consulte [Limitações e pendências](./reference/seguranca-e-limitacoes.md) antes de testar esse recurso em um banco novo.
 :::

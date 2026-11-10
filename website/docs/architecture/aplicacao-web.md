@@ -1,47 +1,50 @@
 ---
 title: Rotas e interface web
-sidebar_position: 5
-description: Endpoints Flask, métodos HTTP e páginas de template.
+sidebar_position: 1
+description: Mapa atualizado de páginas, endpoints e permissões Flask.
 ---
 
 # Rotas e interface web
 
-As rotas são declaradas em `app.py`; a interface é renderizada com Jinja a partir de `templates/`.
+As rotas definidas em `app.py` renderizam templates HTML/Jinja e usam sessão para identificar o usuário.
 
-## Mapa de rotas
+## Autenticação e conta
 
-| Rota | Métodos | Template / comportamento |
+| Rota | Métodos | Descrição |
 |---|---|---|
-| `/` | `GET`, `POST` | `cadastro.html`; exibe e processa cadastro de conta |
-| `/login` | `GET`, `POST` | `login.html`; valida e-mail e senha |
-| `/sair` | `POST` | Limpa sessão e redireciona para login |
-| `/curso` | `GET`, `POST` | `cadastro_curso.html`; apresenta/associa curso ao usuário autenticado |
-| `/disciplinas` | `GET`, `POST` | `cadastro_disciplinas.html`; lista, cadastra, conclui ou reabre disciplinas |
+| `/` | GET, POST | Cadastro |
+| `/login` | GET, POST | Login |
+| `/sair` | POST | Encerrar sessão |
+| `/perfil` | GET, POST | Alterar perfil e credenciais |
+| `/esqueci-senha` | GET, POST | Solicitar link de redefinição (depende de tabela ausente) |
+| `/redefinir-senha/<token>` | GET, POST | Validar token e trocar senha (depende de tabela ausente) |
 
-## Proteção de páginas
+## Estudo e produtividade
 
-As rotas de curso e disciplinas verificam `session['usuario_id']`. Se não houver sessão, redirecionam para `/login`. Se o ID não corresponder a um usuário, a sessão é limpa. A rota de disciplinas também exige que o usuário tenha um curso associado.
+| Rota | Métodos | Descrição |
+|---|---|---|
+| `/curso` | GET, POST | Criar/reutilizar e associar curso |
+| `/disciplinas` | GET, POST | Cadastrar disciplinas e alterar progresso individual |
+| `/dashboard` | GET | Resumo de curso, tarefas e próxima ação |
+| `/tarefas` | GET, POST | Listar e criar tarefas |
+| `/tarefas/<int:tarefa_id>/editar` | GET, POST | Editar tarefa |
+| `/tarefas/<int:tarefa_id>/acao` | POST | Concluir, reabrir ou excluir tarefa |
+| `/agenda` | GET | Agenda baseada nos prazos |
 
-## Formulários de disciplinas
+## Administração
 
-O `POST /disciplinas` distingue a ação pelo campo `acao`:
+| Rota | Métodos | Descrição |
+|---|---|---|
+| `/configurar-proprietario` | GET, POST | Ativar primeiro proprietário mediante token |
+| `/admin/usuarios` | GET | Listar contas (somente proprietário) |
+| `/admin/usuarios/<int:id_usuario>/excluir` | POST | Excluir conta comum |
+| `/admin/usuarios/<int:id_usuario>/papel` | POST | Promover/rebaixar papel |
+| `/admin/usuarios/<int:id_usuario>/senha` | POST | Definir senha de conta comum |
 
-- `concluir`: marca o progresso individual como concluído;
-- `reabrir`: devolve a disciplina ao estado pendente;
-- sem essas ações, tenta cadastrar uma nova disciplina com `nome`, `codigo` e `carga_horaria`.
+As rotas de administração conferem o proprietário via `UsuarioRepository`, não apenas pela presença de links no menu. O app exige token CSRF em todas as requisições POST por formulário.
 
-Quando a pessoa conclui ou reabre uma disciplina, o app verifica se ela pertence ao curso atual antes de salvar o progresso.
+## Principais templates
 
-## Mensagens e redirecionamentos
+`cadastro.html`, `login.html`, `cadastro_curso.html`, `cadastro_disciplinas.html`, `dashboard.html`, `tarefas.html`, `editar_tarefa.html`, `agenda.html`, `perfil.html`, `esqueci_senha.html`, `redefinir_senha.html`, `configurar_proprietario.html`, `admin_usuarios.html` e o parcial `_nav_conta.html`.
 
-Mensagens de sucesso são armazenadas temporariamente na sessão (`mensagem_disciplinas`) para serem exibidas após redirecionamento. Erros de validação retornam o formulário com mensagem e código HTTP adequado; solicitações inválidas de progresso são redirecionadas à lista.
-
-## Templates e estilos
-
-- `templates/cadastro.html` — criação de conta.
-- `templates/login.html` — autenticação.
-- `templates/cadastro_curso.html` — associação/criação de curso.
-- `templates/cadastro_disciplinas.html` — cadastro e acompanhamento individual.
-- `static/styles.css` — estilos compartilhados da aplicação Flask.
-
-O portal de documentação (`website/`) possui CSS e componentes próprios; seus estilos não alteram as páginas Flask.
+A folha de estilos da aplicação é `static/styles.css`; o portal Docusaurus mantém seu CSS em `website/src/css/custom.css`.

@@ -131,3 +131,18 @@ body { letter-spacing: -.004em; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* MyFlow: navegação acessível e leitura em telas pequenas. */
+:focus-visible { outline: 3px solid var(--mf-blue); outline-offset: 3px; }
+.theme-doc-markdown, .markdown { overflow-wrap: anywhere; }
+.markdown pre, .markdown .theme-code-block { max-width: 100%; }
+.markdown table { max-width: 100%; }
+@media (max-width: 996px) {
+  .navbar__inner { gap: .45rem; }
+  .theme-doc-sidebar-container { border-right: 0; }
+}
+@media (max-width: 600px) {
+  .markdown > h1 { line-height: 1.18; }
+  .markdown h2 { margin-top: 2.1rem; }
+  .doc-link-card { min-height: 125px; }
+}

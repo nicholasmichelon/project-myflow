@@ -1,53 +1,61 @@
 ---
 title: Arquitetura da aplicação
 sidebar_position: 1
-description: Visão das camadas e das responsabilidades principais do MyFlow.
+description: "Camadas do MyFlow: web, domínio, persistência e documentação."
 ---
 
 # Arquitetura da aplicação
 
-O MyFlow é organizado em camadas simples. Flask recebe requisições e renderiza templates; os modelos mantêm regras de domínio; os repositórios cuidam da persistência; e o módulo de banco de dados abre conexões SQLite e inicializa o schema.
+O MyFlow separa a interface Flask, as regras de negócio das classes de domínio e as consultas dos repositórios. SQLite guarda usuários, cursos, disciplinas, progresso e tarefas. O Docusaurus documenta o projeto e não é parte do processo Flask.
 
 ```mermaid
 flowchart TB
-    Browser[Navegador] <--> Templates[Templates HTML / Jinja]
-    Templates <--> Flask[app.py · rotas Flask]
-    Flask <--> Models[models/ · objetos e regras]
-    Flask <--> Repositories[repository/ · consultas e persistência]
-    Repositories --> Connection[database/conexao.py]
-    Connection --> SQLite[(database/banco.db)]
-    Schema[database/schema.sql] --> Connection
+    B[Navegador] <--> T[Templates Jinja + CSS]
+    T <--> A[app.py · rotas Flask]
+    A --> M[models/ · objetos e regras]
+    A --> R[repository/ · persistência]
+    R --> C[database/conexao.py]
+    C --> DB[(SQLite banco.db)]
+    S[database/schema.sql] --> C
+    D[Docusaurus · website/] -.-> A
 ```
 
-## Pastas
+## Estrutura principal
 
-| Pasta/arquivo | Responsabilidade |
+| Caminho | Responsabilidade |
 |---|---|
-| `app.py` | Rotas HTTP, sessão, validação de formulários, redirecionamentos e coordenação do fluxo |
-| `models/` | Classes de domínio e validação dos atributos |
-| `repository/` | Operações CRUD e consultas SQLite para cada entidade |
-| `database/conexao.py` | Abre conexões, ativa chaves estrangeiras e inicializa/migra o schema |
-| `database/schema.sql` | Define tabelas, chaves, restrições e índices |
-| `database/corrigir_banco.py` | Migração específica de bancos antigos com restrição única indesejada em `usuarios.curso_id` |
-| `templates/` | Páginas Jinja para cadastro, login, curso e disciplinas |
-| `static/styles.css` | Estilos da interface da aplicação Flask |
-| `uml/` | Fontes PlantUML de diagramas de classes e de sequência |
-| `website/` | Portal de documentação Docusaurus |
+| `app.py` | Rotas, sessão, CSRF, recuperação de senha, administração e composição das telas |
+| `models/` | `Usuario`, `Curso`, `Disciplina`, `ProgressoDisciplina`, `Tarefa`, `SugestorDeTarefas` |
+| `repository/` | CRUD SQLite de usuários, cursos, disciplinas, progresso individual e tarefas |
+| `database/` | Conexões, schema e migrações legadas |
+| `templates/` | Telas Jinja de cadastro, login, painel, tarefas, agenda, perfil e administração |
+| `static/styles.css` | Aparência da aplicação Flask |
+| `tests/` | Testes automatizados para tarefas e regras relacionadas |
+| `uml/` | Diagramas PlantUML do projeto |
+| `website/` | Documentação Docusaurus responsiva |
 
-## Fluxo de dados
+## Responsabilidades
 
-1. A rota lê e normaliza dados do formulário.
-2. Um modelo é construído ou carregado, aplicando suas validações.
-3. O repositório executa operações parametrizadas no SQLite.
-4. A camada de aplicação escolhe um template ou redirecionamento.
-5. A interface apresenta o resultado.
+- O modelo valida entradas com propriedades e métodos (`ValueError` para dados inválidos).
+- O repositório transforma registros SQLite em objetos e executa SQL parametrizado.
+- O `app.py` valida o contexto autenticado, decide os redirecionamentos e renderiza templates.
+- O suggestor recebe tarefas e tempo disponível e devolve uma recomendação **sem consultar o banco diretamente**.
+- Dados compartilhados do curso são separados das informações pessoais: `progresso_disciplinas` e `tarefas` referenciam o usuário.
 
-Os repositórios abrem e fecham suas próprias conexões usando `obter_conexao()`. A aplicação usa o padrão de entrada `python app.py`; nesse caminho, `inicializar_banco()` roda antes do servidor.
+## Fluxo do dashboard
 
-## Princípios usados
-
-- **Separação de responsabilidades:** regra do objeto não precisa estar misturada ao SQL da persistência.
-- **Validação no modelo:** propriedades validam os valores atribuídos.
-- **Consultas parametrizadas:** os repositórios passam valores como parâmetros SQL, evitando concatenar dados do usuário nos comandos.
-- **Chaves estrangeiras:** SQLite tem `PRAGMA foreign_keys = ON` por conexão.
-- **Progresso separado:** o estado de conclusão pertence à relação entre usuário e disciplina, não ao catálogo compartilhado.
+```mermaid
+sequenceDiagram
+    actor Pessoa
+    participant App as Flask /dashboard
+    participant CursoRepo as CursoRepository
+    participant TarefaRepo as TarefaRepository
+    participant Prog as ProgressoDisciplinaRepository
+    participant Sugestor as SugestorDeTarefas
+    Pessoa->>App: GET /dashboard
+    App->>CursoRepo: buscar_por_id(curso_id)
+    App->>TarefaRepo: listar_do_usuario(usuario_id)
+    App->>Prog: calcular_progresso(usuario_id, curso_id)
+    App->>Sugestor: sugerir_proxima_acao(tarefas)
+    App-->>Pessoa: dashboard.html
+```

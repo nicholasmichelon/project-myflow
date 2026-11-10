@@ -1,45 +1,34 @@
 ---
 title: Jornada de uso
 sidebar_position: 1
-description: Caminho realizado desde o cadastro até o acompanhamento das disciplinas.
+description: Fluxo desde o cadastro até o dashboard e as tarefas.
 ---
 
 # Jornada de uso
 
-O fluxo principal do MyFlow é dividido em etapas. O servidor mantém a identificação do usuário autenticado na sessão Flask.
-
-## Etapa 1 — Criar uma conta
-
-Na página `/`, a pessoa informa nome, e-mail, jornada de aprendizagem, objetivo, tempo disponível em minutos, senha e confirmação de senha. A aplicação verifica se a senha tem pelo menos oito caracteres, se as duas senhas coincidem e se o e-mail já está cadastrado. A classe `Usuario` também valida os atributos antes de o repositório gravá-los.
-
-Ao concluir o cadastro, a aplicação grava a conta, limpa uma eventual sessão anterior, registra `usuario_id` na sessão e encaminha para `/curso`.
-
-## Etapa 2 — Associar um curso
-
-O usuário informa o nome e o nível do curso. O sistema procura um curso já cadastrado com o mesmo nome. Se encontrar um curso com nível compatível, reutiliza-o; caso contrário, cria um novo. O usuário fica associado a um único curso.
-
-Um curso já existente com o mesmo nome e nível diferente gera uma mensagem de erro, em vez de criar silenciosamente um segundo cadastro com o mesmo nome.
-
-## Etapa 3 — Cadastrar disciplinas
-
-Na página `/disciplinas`, o usuário informa nome, código e carga horária em horas. A carga horária deve ser um inteiro positivo, e o código não pode se repetir dentro do curso.
-
-As disciplinas pertencem ao catálogo do curso. Quando duas pessoas compartilham um curso, veem o mesmo conjunto de disciplinas.
-
-## Etapa 4 — Atualizar o progresso
-
-Para cada disciplina, o usuário pode marcar como concluída ou reabrir a atividade. O estado é salvo na tabela `progresso_disciplinas`, usando `usuario_id` e `disciplina_id`. Assim, o progresso de uma pessoa não altera o de outra.
+1. **Cadastro** em `/`: nome, e-mail, jornada, objetivo, tempo disponível em minutos e senha de ao menos oito caracteres. Após persistir, a sessão recebe `usuario_id`.
+2. **Curso** em `/curso`: selecionar nome e nível. Um curso já existente pode ser reutilizado, desde que o nível corresponda; cada usuário tem no máximo um curso.
+3. **Disciplinas** em `/disciplinas`: cadastrar nome, código e carga horária ou marcar a conclusão pessoal; o catálogo de disciplinas é compartilhado entre usuários do mesmo curso.
+4. **Painel** em `/dashboard`: visualizar progresso individual das disciplinas, tarefas pendentes e concluídas e uma sugestão de próxima tarefa.
+5. **Produtividade** em `/tarefas` e `/agenda`: gerenciar atividades, prazos e prioridade, com associação opcional a disciplinas.
+6. **Conta** em `/perfil`: revisar os dados e, quando necessário, trocar e-mail ou senha mediante confirmação da senha atual.
 
 ```mermaid
-flowchart TD
-    A[Cadastro /] --> B[Conta criada e sessão iniciada]
-    B --> C[Curso /curso]
-    C --> D[Disciplinas /disciplinas]
-    D --> E[Adicionar disciplina]
-    D --> F[Concluir ou reabrir]
-    F --> G[Persistir progresso individual]
+sequenceDiagram
+    actor Pessoa
+    participant Flask as app.py
+    participant UsuarioRepo as UsuarioRepository
+    participant TarefaRepo as TarefaRepository
+    Pessoa->>Flask: Cadastro ou login
+    Flask->>UsuarioRepo: Salvar ou buscar usuário
+    UsuarioRepo-->>Flask: Usuário autenticado
+    Flask-->>Pessoa: Curso ou dashboard
+    Pessoa->>Flask: Abrir dashboard
+    Flask->>TarefaRepo: listar_do_usuario(usuario.id)
+    TarefaRepo-->>Flask: Tarefas pessoais
+    Flask-->>Pessoa: Painel e recomendação
 ```
 
-## Se a pessoa entrar novamente
-
-Em `/login`, após validar as credenciais, o MyFlow direciona para `/curso` se a conta ainda não tiver curso, ou para `/disciplinas` quando já estiver associada a um. Se o ID da sessão não corresponder a um usuário existente, a sessão é limpa e a pessoa volta à tela de login.
+:::info Após novo login
+Quem não possui curso é encaminhado para `/curso`; quem já possui vai diretamente para `/dashboard`. A tela de disciplinas continua acessível no menu.
+:::

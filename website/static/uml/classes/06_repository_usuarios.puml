@@ -20,6 +20,9 @@ package "repository" {
     +buscar_por_email(email : str) : Usuario | None
     +atualizar(usuario : Usuario) : bool
     +excluir(id_usuario : int) : bool
+    +contar_proprietarios() : int
+    +definir_proprietario(id_usuario : int, is_owner : bool) : bool
+    +listar_para_administracao() : list[dict]
   }
 
   class CursoRepository {
@@ -33,6 +36,7 @@ package "models" {
     +nome : str
     +email : str
     +senha_hash : str | None
+    +is_owner : bool
     +curso : Curso | None
   }
   class Curso {

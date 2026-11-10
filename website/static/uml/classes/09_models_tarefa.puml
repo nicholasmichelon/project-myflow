@@ -1,0 +1,27 @@
+@startuml 09_models_tarefa
+title MyFlow - Modelo Tarefa
+skinparam classAttributeIconSize 0
+class Tarefa {
+  +id : int | None
+  +usuario_id : int
+  +disciplina_id : int | None
+  +titulo : str
+  +descricao : str
+  +prazo : str | None
+  +prioridade : str
+  +duracao_estimada : int
+  +concluida : bool
+  +disciplina_nome : str | None
+  --
+  +concluir() : bool
+  +reabrir() : bool
+  +esta_atrasada(data_atual=None) : bool
+  +to_dict() : dict
+}
+Usuario "1" -- "0..*" Tarefa : possui
+Disciplina "0..1" <-- "0..*" Tarefa : categoria opcional
+note bottom of Tarefa
+  Uma tarefa é individual, pertence a um usuário
+  e pode ser associada a uma disciplina do curso.
+end note
+@enduml

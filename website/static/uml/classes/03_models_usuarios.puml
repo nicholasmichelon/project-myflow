@@ -16,6 +16,7 @@ package "models" {
     -_objetivo : str
     -_tempo_disponivel : int
     -_senha_hash : str | None
+    -_is_owner : bool
     -_curso : Curso | None
     .. properties (getter / setter com validação) ..
     +id : int | None
@@ -25,9 +26,10 @@ package "models" {
     +objetivo : str
     +tempo_disponivel : int
     +senha_hash : str | None
+    +is_owner : bool
     +curso : Curso | None
     -- construtor --
-    +__init__(nome, email, jornada, objetivo, tempo_disponivel, id=None, senha_hash=None)
+    +__init__(nome, email, jornada, objetivo, tempo_disponivel, id=None, senha_hash=None, is_owner=False)
     -- comportamentos --
     +definir_curso(curso : Curso) : bool
     +remover_curso() : bool
@@ -54,6 +56,7 @@ note right of Usuario
     todo usuário nasce com curso = None
   - cada usuário tem no máximo um curso
   - a senha é armazenada como hash, não em texto puro
+  - is_owner identifica as contas com acesso administrativo
   - email deve conter "@"
   - tempo_disponivel em minutos, inteiro > 0
   - definir_curso(): False se já tiver curso

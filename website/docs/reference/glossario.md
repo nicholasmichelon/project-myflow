@@ -1,22 +1,28 @@
 ---
 title: Glossário
-sidebar_position: 4
-description: Termos usados na documentação do MyFlow.
+sidebar_position: 1
+description: Conceitos usados no projeto e nas regras de negócio.
 ---
 
 # Glossário
 
-| Termo | Significado no projeto |
+| Conceito | Significado |
 |---|---|
-| Modelo | Classe de domínio que representa usuário, curso, disciplina ou progresso |
-| Repositório | Classe que realiza consultas e persistência de um modelo no SQLite |
-| Curso compartilhado | Registro de curso que pode estar associado a vários usuários |
-| Catálogo de disciplinas | Conjunto de disciplinas associadas a um curso, compartilhado pelos usuários desse curso |
-| Progresso individual | Estado de conclusão de uma disciplina para um usuário específico |
-| `senha_hash` | Representação criptográfica da senha usada para verificar autenticação sem armazenar a senha pura |
-| Sessão Flask | Dados assinados que permitem reconhecer a conta autenticada entre requisições |
-| Migração | Alteração controlada do schema ou transferência de dados de uma estrutura antiga para a nova |
-| `ValueError` | Exceção usada pelo projeto para sinalizar valores inválidos ou alguns conflitos de persistência |
-| Docusaurus | Gerador de site estático usado para publicar esta documentação |
-| PlantUML (`.puml`) | Formato textual dos diagramas UML originais do repositório |
-| Mermaid | Sintaxe textual para diagramas renderizados diretamente nas páginas Docusaurus |
+| Modelo | Classe Python que representa dados ou regras de negócio |
+| Repositório | Classe que consulta e persiste objetos SQLite |
+| Curso compartilhado | Curso associado a mais de um usuário |
+| Disciplina | Item do catálogo de um curso; sem conclusão compartilhada |
+| Progresso individual | Conclusão de disciplina registrada por usuário |
+| Tarefa | Atividade pessoal com prazo, prioridade e duração estimada |
+| Sugestor de tarefas | Ordenação determinística da próxima tarefa compatível com o tempo livre |
+| Dashboard | Tela de resumo individual em `/dashboard` |
+| Agenda | Apresentação de tarefas conforme prazos em `/agenda` |
+| Proprietário | Conta com `is_owner=True`, autorizada a administrar usuários |
+| CSRF | Ataque que tenta enviar formulário em nome de uma sessão; o app exige token nas requisições POST |
+| Hash de senha | Representação protegida utilizada para verificar a senha sem salvar o texto original |
+| Token de recuperação | Segredo aleatório temporário usado para redefinir senha; requer tabela ainda não criada pelo schema anexado |
+| SMTP | Protocolo para envio de e-mail de recuperação |
+| Schema | Estrutura SQL de tabelas, campos e restrições |
+| Migração | Mudança de estrutura ou dados em uma versão anterior do banco |
+| PlantUML | Formato `.puml` dos diagramas editáveis |
+| Mermaid | Sintaxe dos diagramas renderizados no site Docusaurus |

@@ -28,7 +28,7 @@ repo --> app : Usuario ou None
 alt usuário não encontrado
   app --> pessoa : mensagem genérica de credenciais inválidas
 else conta sem senha configurada
-  app --> pessoa : instrução para definir senha localmente
+  app --> pessoa : instrução para pedir ao proprietário uma senha inicial na interface administrativa
 else usuário encontrado
   app -> seguranca : check_password_hash(senha_hash, senha)
   alt senha incorreta

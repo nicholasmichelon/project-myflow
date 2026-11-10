@@ -1,0 +1,55 @@
+@startuml 11_sequencia_perfil_administracao
+title MyFlow - Perfil e administração de contas
+
+skinparam shadowing false
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Usuário" as user
+actor "Proprietário" as owner
+participant "Flask app.py" as app
+participant "UsuarioRepository" as repo
+participant "Werkzeug Security" as security
+database "SQLite" as db
+
+== Edição do próprio perfil ==
+user -> app : GET /perfil
+app -> repo : buscar_por_id(usuario_id)
+repo -> db : SELECT dados da conta (sem exibir hash)
+db --> repo : dados do usuário
+repo --> app : Usuario
+app --> user : perfil.html
+
+user -> app : POST /perfil (dados + token CSRF)
+app -> security : validar senha atual quando trocar e-mail/senha
+security --> app : válida / inválida
+alt dados válidos
+  app -> security : generate_password_hash(nova_senha), se solicitada
+  app -> repo : atualizar(usuario)
+  repo -> db : UPDATE conta e hash
+  db --> repo : OK
+  app --> user : confirmação
+else inválidos
+  app --> user : mensagem de validação
+end
+
+== Administração exclusiva ==
+owner -> app : GET /admin/usuarios
+app -> repo : buscar proprietário na sessão
+repo -> db : SELECT is_owner
+ db --> repo : proprietário confirmado
+app -> repo : listar_para_administracao()
+repo -> db : SELECT contas sem senha_hash
+ db --> repo : contas
+app --> owner : admin_usuarios.html
+
+owner -> app : POST exclusão de conta (CSRF)
+app -> repo : verificar papel e proteger proprietários/conta atual
+app -> repo : excluir(id_usuario)
+repo -> db : DELETE FROM usuarios
+note over app,db
+  O hash da senha é removido junto com o registro.
+  O sistema nunca revela senhas existentes.
+end note
+@enduml

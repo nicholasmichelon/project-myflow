@@ -1,3 +1,7 @@
+> **Instalação no Windows:** este portal está na pasta `website/` do projeto. Se seu projeto está em `C:\project-myflow`, extraia o pacote corrigido na **raiz** `C:\project-myflow` (não dentro da pasta `website`). Antes de extrair, renomeie a pasta `website` antiga como backup para evitar arquivos duplicados.
+>
+> Confira o caminho: `Test-Path C:\project-myflow\website\package.json` deve retornar `True`.
+
 # MyFlow Documentation (Docusaurus)
 
 Portal em português para documentar o protótipo acadêmico MyFlow. O conteúdo cobre produto, instalação, configuração, fluxos da aplicação, modelos, repositórios, SQLite, rotas Flask, segurança, solução de problemas e UML.

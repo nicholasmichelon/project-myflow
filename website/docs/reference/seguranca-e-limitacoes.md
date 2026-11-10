@@ -1,36 +1,41 @@
 ---
-title: Segurança e limitações conhecidas
-sidebar_position: 2
-description: Medidas existentes e lacunas relevantes antes de qualquer publicação pública.
+title: Segurança e limitações
+sidebar_position: 1
+description: Proteções existentes, problemas observados e condições para publicação.
 ---
 
 # Segurança e limitações conhecidas
 
-O MyFlow é um protótipo acadêmico local. O código contém algumas medidas positivas, mas não implementa todos os controles esperados de uma aplicação publicada na internet.
+O MyFlow é um **protótipo acadêmico local**. As medidas do código não são equivalentes a uma auditoria de segurança.
 
-## Medidas existentes
+## Proteções presentes
 
-- As senhas são armazenadas como hash por `werkzeug.security`.
-- O login retorna mensagem genérica para e-mail inexistente ou senha incorreta.
-- A sessão é limpa antes de iniciar sessão após cadastro ou login.
-- O modo de depuração fica desativado por padrão.
-- A chave secreta pode ser fornecida pela variável `MYFLOW_SECRET_KEY`.
-- Os comandos SQL dos repositórios usam parâmetros para os valores recebidos.
-- O SQLite ativa chaves estrangeiras em cada conexão.
+- Hash de senha com `werkzeug.security` (`generate_password_hash` / `check_password_hash`).
+- Validação de token CSRF em todas as requisições `POST` no `before_request`.
+- Consultas SQL parametrizadas nos repositórios.
+- Sessão baseada em `usuario_id`, conferindo o papel administrativo no banco.
+- Isolamento das tarefas por `usuario_id`; progresso por usuário e disciplina.
+- Token aleatório para ativação inicial de proprietário quando não há contas proprietárias.
+- Fluxo de redefinição **programado** para armazenar hash do token, expirar após 30 minutos e limitar solicitações em memória.
 
-## Lacunas que precisam ser tratadas antes de publicar
+## Pendências confirmadas no código enviado
 
-- **Chave secreta padrão:** o código possui um valor de fallback para desenvolvimento local. Uma publicação precisa definir uma chave própria e protegida por variável de ambiente.
-- **CSRF:** os formulários não têm proteção CSRF implementada.
-- **Tentativas de login:** não há limitação de tentativas ou mecanismo de bloqueio.
-- **Recuperação de senha:** não há fluxo de recuperação por e-mail.
-- **HTTPS e hospedagem:** este pacote não configura domínio, TLS, proxy reverso ou ambiente de produção.
-- **Migração e backup:** a manutenção do arquivo SQLite requer cópias de segurança antes de migrações ou substituição de arquivos.
+| Prioridade | Questão | Consequência e medida |
+|---|---|---|
+| Alta | `tokens_recuperacao_senha` não é criada pelo schema | Recuperação de senha falha em banco novo; atualizar schema e migração |
+| Alta | `app.run(debug=True, use_reloader=False)` | Debug fica ativo quando executado com `python app.py`; desativar antes de exposição externa |
+| Alta | Não há limitação geral de tentativas de login | Avaliar bloqueio progressivo, rate limiting e monitoramento |
+| Alta | Ausência de infraestrutura HTTPS e gestão de segredos para produção | Não publicar diretamente o servidor de desenvolvimento |
+| Média | Limite de solicitações de recuperação mantido em dicionário em memória | Reinício do processo zera o limite; inadequado para múltiplas instâncias |
+| Média | `.env.example` citado no guia, mas ausente do pacote | Criar configuração local manualmente, sem divulgar credenciais |
+| Média | Cobertura automática limitada a `tests/test_tarefas.py` | Testar formulário, autorização, administração e recuperação separadamente |
 
-:::danger Não publicar como está
-Não exponha este protótipo à internet sem tratar as lacunas listadas, configurar a chave secreta, adotar HTTPS e revisar o ambiente de execução. A documentação não representa uma certificação de segurança.
+A variável `MYFLOW_DEBUG` **não é utilizada** pelo `app.py` atual. O fallback de `MYFLOW_SECRET_KEY` gera uma chave aleatória por inicialização, encerrando as sessões anteriores após reinício.
+
+:::danger Não implantar diretamente na internet
+Antes de qualquer publicação: desative debug, complete a migração do banco, configure HTTPS e segredos, valide autorização, estabeleça limites de tentativas e teste o fluxo de recuperação. O site Docusaurus é estático; essas recomendações referem-se ao servidor Flask.
 :::
 
-## Dados e privacidade
+## Privacidade
 
-Evite colocar e-mails, hashes de senha ou outros dados reais em exemplos, capturas de tela e arquivos de distribuição. O banco de dados local deve permanecer fora do ZIP de entrega e do controle de versão.
+Não distribua `database/banco.db`, arquivos `.env`, backups, senhas, tokens ou capturas contendo e-mails de usuários. Os pacotes desta atualização omitem o banco do projeto recebido.
